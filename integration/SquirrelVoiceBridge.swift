@@ -412,7 +412,7 @@ final class SquirrelVoiceHUD: NSPanel {
   private var lastLevelUpdate: TimeInterval = 0
 
   init() {
-    let rect = NSRect(x: 0, y: 0, width: 152, height: 36)
+    let rect = NSRect(x: 0, y: 0, width: 126, height: 36)
     super.init(contentRect: rect, styleMask: .nonactivatingPanel, backing: .buffered, defer: true)
     isOpaque = false
     backgroundColor = .clear
@@ -439,10 +439,10 @@ final class SquirrelVoiceHUD: NSPanel {
     symbol.imageScaling = .scaleProportionallyDown
 
     modelButton.isBordered = false
-    modelButton.font = .systemFont(ofSize: 11.5, weight: .medium)
     modelButton.contentTintColor = .labelColor
-    modelButton.image = NSImage(systemSymbolName: "chevron.down", accessibilityDescription: "Choose voice model")
-    modelButton.imagePosition = .imageTrailing
+    modelButton.image = NSImage(systemSymbolName: "cpu", accessibilityDescription: "Choose voice model")
+    modelButton.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
+    modelButton.imagePosition = .imageOnly
     modelButton.imageScaling = .scaleProportionallyDown
     modelButton.target = self
     modelButton.action = #selector(modelPressed)
@@ -474,10 +474,10 @@ final class SquirrelVoiceHUD: NSPanel {
 
       modelButton.leadingAnchor.constraint(equalTo: wave.trailingAnchor, constant: 5),
       modelButton.centerYAnchor.constraint(equalTo: root.centerYAnchor),
-      modelButton.widthAnchor.constraint(equalToConstant: 54),
+      modelButton.widthAnchor.constraint(equalToConstant: 24),
       modelButton.heightAnchor.constraint(equalToConstant: 24),
 
-      cancelButton.leadingAnchor.constraint(equalTo: modelButton.trailingAnchor, constant: 1),
+      cancelButton.leadingAnchor.constraint(equalTo: modelButton.trailingAnchor, constant: 3),
       cancelButton.centerYAnchor.constraint(equalTo: root.centerYAnchor),
       cancelButton.widthAnchor.constraint(equalToConstant: 24),
       cancelButton.heightAnchor.constraint(equalToConstant: 24)
@@ -488,12 +488,10 @@ final class SquirrelVoiceHUD: NSPanel {
 
   func showPreparing(anchor: NSRect) {
     wave.setLevel(0)
-    updateModelTitle()
     show(anchor: anchor)
   }
 
   func showListening(anchor: NSRect) {
-    updateModelTitle()
     show(anchor: anchor)
   }
 
@@ -528,10 +526,6 @@ final class SquirrelVoiceHUD: NSPanel {
 
   @objc private func modelPressed() {
     onModelSettings?()
-  }
-
-  private func updateModelTitle() {
-    modelButton.title = SquirrelVoiceModelStore.shared.activeModel()?.shortName ?? "R2T2"
   }
 
   private func updateAppearance() {

@@ -20,7 +20,7 @@ This first native milestone provides:
 - a compact non-activating voice HUD beside the current input caret;
 - a static SF Symbol plus five discrete microphone-level bars (no continuous animation loop);
 - a clickable `xmark.circle` cancel control that uses the same hard-stop path;
-- a clickable current-model button in the HUD (`R2T2` by default) that opens model settings;
+- a compact `cpu` SF Symbol in the HUD that opens model settings without showing a model name;
 - Squirrel menu entries for start/stop voice input, the active voice model, and voice settings;
 - a native AppKit model settings window that scans the default LM Studio model directory,
   Squirrel Voice's own model directory, and one user-selected custom directory;
@@ -70,6 +70,11 @@ The settings model record already includes an `engine` field. v0.1 only marks
 the R2T2/llama.cpp path as automatically compatible because that is the engine
 validated by this project. Additional speech engines can be added later
 without redesigning the HUD or settings window.
+
+Squirrel Voice deliberately does not add a language-correction, terminology,
+prompting, punctuation-rewrite, or second-pass LLM layer. The runtime stays a
+small local speech-to-text path: microphone -> ASR model -> stable text ->
+Squirrel.
 
 ## Build
 

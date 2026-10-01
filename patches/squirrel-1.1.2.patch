@@ -52,7 +52,7 @@ index df13876..0d22735 100644
  	<true/>
  	<key>SUFeedURL</key>
 diff --git a/sources/SquirrelInputController.swift b/sources/SquirrelInputController.swift
-index bad53d9..690cbf1 100644
+index bad53d9..b5f103b 100644
 --- a/sources/SquirrelInputController.swift
 +++ b/sources/SquirrelInputController.swift
 @@ -28,6 +28,52 @@ final class SquirrelInputController: IMKInputController {
@@ -152,7 +152,7 @@ index bad53d9..690cbf1 100644
      hidePalettes()
      commitComposition(sender)
      client = nil
-@@ -226,6 +295,32 @@ final class SquirrelInputController: IMKInputController {
+@@ -226,6 +295,31 @@ final class SquirrelInputController: IMKInputController {
    }
  
    override func menu() -> NSMenu! {
@@ -165,9 +165,8 @@ index bad53d9..690cbf1 100644
 +    voiceToggle.keyEquivalentModifierMask = [.command, .shift]
 +    voiceToggle.image = NSImage(systemSymbolName: "waveform.badge.mic", accessibilityDescription: "Voice input")
 +
-+    let activeModel = SquirrelVoiceModelStore.shared.activeModel()?.shortName ?? "R2T2"
 +    let voiceModel = NSMenuItem(
-+      title: voiceLocalized("语音模型：\(activeModel)…", "Voice Model: \(activeModel)…"),
++      title: voiceLocalized("语音模型…", "Voice Model…"),
 +      action: #selector(openVoiceSettings),
 +      keyEquivalent: ""
 +    )
@@ -185,7 +184,7 @@ index bad53d9..690cbf1 100644
      let deploy = NSMenuItem(title: NSLocalizedString("Deploy", comment: "Menu item"), action: #selector(deploy), keyEquivalent: "`")
      deploy.target = self
      deploy.keyEquivalentModifierMask = [.control, .option]
-@@ -241,6 +336,10 @@ final class SquirrelInputController: IMKInputController {
+@@ -241,6 +335,10 @@ final class SquirrelInputController: IMKInputController {
      update.target = self
  
      let menu = NSMenu()
@@ -196,7 +195,7 @@ index bad53d9..690cbf1 100644
      menu.addItem(deploy)
      menu.addItem(sync)
      menu.addItem(logDir)
-@@ -251,6 +350,24 @@ final class SquirrelInputController: IMKInputController {
+@@ -251,6 +349,24 @@ final class SquirrelInputController: IMKInputController {
      return menu
    }
  
@@ -221,7 +220,7 @@ index bad53d9..690cbf1 100644
    @objc func deploy() {
      NSApp.squirrelAppDelegate.deploy()
    }
-@@ -276,12 +393,48 @@ final class SquirrelInputController: IMKInputController {
+@@ -276,12 +392,48 @@ final class SquirrelInputController: IMKInputController {
    }
  
    deinit {
