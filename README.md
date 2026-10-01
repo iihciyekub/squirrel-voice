@@ -21,6 +21,7 @@ Squirrel Voice 是一个独立的 macOS 输入法，基于 Rime Squirrel，并�
 
 ```bash
 brew tap iihciyekub/squirrel-voice https://github.com/iihciyekub/squirrel-voice.git
+brew trust iihciyekub/squirrel-voice
 brew install --cask squirrel-voice
 ```
 

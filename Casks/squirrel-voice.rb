@@ -7,7 +7,7 @@ cask "squirrel-voice" do
   desc "Rime input method with lightweight local speech-to-text"
   homepage "https://github.com/iihciyekub/squirrel-voice"
 
-  depends_on macos: ">= :ventura"
+  depends_on macos: :ventura
 
   input_method "Squirrel Voice.app"
 
