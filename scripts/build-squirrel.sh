@@ -35,8 +35,12 @@ if [[ "${SQUIRREL_USE_UPSTREAM_PREBUILT:-0}" == "1" ]]; then
     # action-install.sh copies a versioned Sparkle framework with symlinks.
     # Remove any previous extracted/copied runtime first so repeated local/CI
     # builds cannot merge two framework layouts and corrupt those symlinks.
-    rm -rf download Frameworks/Sparkle.framework librime/dist
-    export SQUIRREL_BUNDLED_RECIPES="${SQUIRREL_BUNDLED_RECIPES:-lotem/rime-octagram-data lotem/rime-octagram-data@hant}"
+    rm -rf download Frameworks/Sparkle.framework librime/dist data/plum plum/output
+    # Squirrel's Xcode project contains references to the standard Rime preset
+    # schemas (bopomofo/cangjie/luna-pinyin/stroke/terra-pinyin). Install the
+    # canonical Plum preset explicitly on clean machines, then layer the same
+    # octagram data used by Squirrel 1.1.2's upstream release workflow.
+    export SQUIRREL_BUNDLED_RECIPES="${SQUIRREL_BUNDLED_RECIPES:-:preset lotem/rime-octagram-data lotem/rime-octagram-data@hant}"
     ./action-install.sh
   )
 elif [[ "${SQUIRREL_REBUILD_DEPS:-0}" != "1" && "$INSTALLED_VERSION" == "1.1.2" ]]; then
