@@ -191,14 +191,18 @@ the current keychain. If that installer identity is unavailable,
 `release-local.sh` creates an **unsigned PKG for local testing only** and skips
 PKG notarization. Do not publish that unsigned package.
 
-Once the Developer ID Installer identity is available, the signed + notarized
-PKG is the canonical distribution artifact. Homebrew should install the same
-PKG rather than moving the input-method bundle itself. After a PKG release is
-published, generate a cask from `homebrew/Casks/squirrel-voice.rb.in` with:
+The signed + notarized ZIP is the canonical Homebrew artifact. Homebrew's
+`input_method` cask stanza installs `Squirrel Voice.app` into the current
+user's `~/Library/Input Methods`, so Homebrew does not require a Developer ID
+Installer certificate or a PKG. A signed PKG can still be produced as an
+optional system-wide installer when an Installer identity is available.
+
+After a ZIP release is published, generate a cask from
+`homebrew/Casks/squirrel-voice.rb.in` with:
 
 ```bash
-SQUIRREL_VOICE_RELEASE_BASE_URL=https://github.com/OWNER/REPO/releases/download \
-SQUIRREL_VOICE_HOMEPAGE=https://github.com/OWNER/REPO \
+SQUIRREL_VOICE_RELEASE_BASE_URL=https://github.com/iihciyekub/squirrel-voice/releases/download \
+SQUIRREL_VOICE_HOMEPAGE=https://github.com/iihciyekub/squirrel-voice \
 ./scripts/render-cask.sh
 ```
 

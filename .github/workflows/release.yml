@@ -86,7 +86,12 @@ jobs:
         run: ./scripts/notarize-app.sh
 
       - name: Create release ZIP
-        run: ./scripts/package-zip.sh
+        run: |
+          set -euo pipefail
+          ./scripts/package-zip.sh
+          SQUIRREL_VOICE_RELEASE_BASE_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download" \
+          SQUIRREL_VOICE_HOMEPAGE="https://github.com/${GITHUB_REPOSITORY}" \
+            ./scripts/render-cask.sh
 
       - name: Build and notarize PKG when Installer identity is available
         run: |
@@ -94,9 +99,6 @@ jobs:
           if [[ "$HAS_INSTALLER_IDENTITY" == "1" ]]; then
             ./scripts/package-pkg.sh
             ./scripts/notarize-pkg.sh
-            SQUIRREL_VOICE_RELEASE_BASE_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download" \
-            SQUIRREL_VOICE_HOMEPAGE="https://github.com/${GITHUB_REPOSITORY}" \
-              ./scripts/render-cask.sh
           else
             echo "Developer ID Installer identity is not present in MAC_CSC_P12_BASE64; skipping publishable PKG."
           fi
@@ -129,9 +131,8 @@ jobs:
             git tag -f "$TAG" "$GITHUB_SHA"
             git push origin "$TAG" --force
           fi
-          assets=("dist/SquirrelVoice-$VERSION-arm64.zip" "dist/SHA256SUMS.txt")
+          assets=("dist/SquirrelVoice-$VERSION-arm64.zip" "dist/SHA256SUMS.txt" "dist/squirrel-voice.rb")
           [[ -f "dist/SquirrelVoice-$VERSION-arm64.pkg" ]] && assets+=("dist/SquirrelVoice-$VERSION-arm64.pkg")
-          [[ -f "dist/squirrel-voice.rb" ]] && assets+=("dist/squirrel-voice.rb")
           gh release create "$TAG" "${assets[@]}" \
             --title "Squirrel Voice $VERSION" \
             --notes "Squirrel Voice $VERSION for Apple Silicon macOS. Models are not bundled."

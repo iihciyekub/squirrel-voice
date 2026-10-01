@@ -148,23 +148,23 @@ index a0c80ad..085c58d 100644
    private lazy var inputSources: [String: TISInputSource] = {
      var inputSources = [String: TISInputSource]()
 diff --git a/sources/Main.swift b/sources/Main.swift
-index dca533b..f86adeb 100644
+index dca533b..e762094 100644
 --- a/sources/Main.swift
 +++ b/sources/Main.swift
-@@ -15,10 +15,10 @@ struct SquirrelApp {
+@@ -15,10 +15,8 @@ struct SquirrelApp {
    } else {
      try! FileManager.default.url(for: .libraryDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathComponent("Rime", isDirectory: true)
    }
 -  static let appDir = "/Library/Input Library/Squirrel.app".withCString { dir in
-+  static let appDir = "/Library/Input Methods/Squirrel Voice.app".withCString { dir in
-     URL(fileURLWithFileSystemRepresentation: dir, isDirectory: false, relativeTo: nil)
-   }
+-    URL(fileURLWithFileSystemRepresentation: dir, isDirectory: false, relativeTo: nil)
+-  }
 -  static let logDir = FileManager.default.temporaryDirectory.appending(component: "rime.squirrel", directoryHint: .isDirectory)
++  static let appDir = Bundle.main.bundleURL
 +  static let logDir = FileManager.default.temporaryDirectory.appending(component: "rime.squirrel-voice", directoryHint: .isDirectory)
  
    // swiftlint:disable:next cyclomatic_complexity
    static func main() {
-@@ -35,7 +35,7 @@ struct SquirrelApp {
+@@ -35,7 +33,7 @@ struct SquirrelApp {
            runningSquirrels.forEach { $0.terminate() }
            return true
          case "--reload":
@@ -173,7 +173,7 @@ index dca533b..f86adeb 100644
            return true
          case "--register-input-source", "--install":
            installer.register()
-@@ -72,13 +72,13 @@ struct SquirrelApp {
+@@ -72,13 +70,13 @@ struct SquirrelApp {
            SquirrelApplicationDelegate.showMessage(msgText: NSLocalizedString("deploy_update", comment: ""))
            // Build all schemas in current directory
            var builderTraits = RimeTraits.rimeStructInit()
@@ -189,7 +189,7 @@ index dca533b..f86adeb 100644
            return true
          case "--help":
            print(helpDoc)
-@@ -121,12 +121,12 @@ struct SquirrelApp {
+@@ -121,12 +119,12 @@ struct SquirrelApp {
          NSApp.squirrelAppDelegate.setupRime()
          NSApp.squirrelAppDelegate.startRime(fullCheck: false)
          NSApp.squirrelAppDelegate.loadSettings()

@@ -2,19 +2,18 @@ cask "squirrel-voice" do
   version "@VERSION@"
   sha256 "@SHA256@"
 
-  url "@RELEASE_BASE_URL@/v#{version}/SquirrelVoice-#{version}-arm64.pkg"
+  url "@RELEASE_BASE_URL@/v#{version}/SquirrelVoice-#{version}-arm64.zip"
   name "Squirrel Voice"
   desc "Rime input method with lightweight local speech-to-text"
   homepage "@HOMEPAGE@"
 
   depends_on macos: ">= :ventura"
 
-  pkg "SquirrelVoice-#{version}-arm64.pkg"
-
-  uninstall pkgutil: "im.rime.inputmethod.SquirrelVoice.pkg"
+  input_method "Squirrel Voice.app"
 
   caveats <<~EOS
-    After installation, enable Squirrel Voice in System Settings > Keyboard > Input Sources.
+    Squirrel Voice is installed for the current user in ~/Library/Input Methods.
+    After installation, enable it in System Settings > Keyboard > Input Sources.
     Speech models are stored separately and are not downloaded by Homebrew.
   EOS
 end
