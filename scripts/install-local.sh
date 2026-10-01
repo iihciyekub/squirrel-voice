@@ -42,10 +42,21 @@ if [[ -d "$LEGACY_DST" ]]; then
     "$LEGACY_DST" "$LEGACY_BACKUP" "$(id -u)" "$(id -g)"
   echo "Migrated legacy system install to: $LEGACY_BACKUP"
 fi
+
 if [[ -d "$DST" ]]; then
-  /bin/mv "$DST" "$BACKUP"
+  # Keep the top-level input-method bundle in place. Removing or moving the
+  # bundle, even briefly, can make macOS purge its enabled input-source state.
+  # Back up the current bundle, stop the running process, then replace only
+  # Contents in place so ~/Library/Input Methods/Squirrel Voice.app never
+  # disappears from the filesystem.
+  /usr/bin/ditto "$DST" "$BACKUP"
+  pkill -f "$DST/Contents/MacOS/Squirrel Voice" 2>/dev/null || true
+  sleep 1
+  /bin/rm -rf "$DST/Contents"
+  /usr/bin/ditto "$APP/Contents" "$DST/Contents"
+else
+  /usr/bin/ditto "$APP" "$DST"
 fi
-/usr/bin/ditto "$APP" "$DST"
 
 if ! codesign --verify --deep --strict "$DST"; then
   echo "Installed app failed signature verification." >&2
@@ -59,11 +70,6 @@ fi
 
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
   -f -R -trusted "$DST"
-pkill -f "$DST/Contents/MacOS/Squirrel Voice" 2>/dev/null || true
-sleep 1
-"$DST/Contents/MacOS/Squirrel Voice" --install || true
-killall TextInputMenuAgent 2>/dev/null || true
-open "$DST"
 
 echo "Installed: $DST"
 if [[ -d "$BACKUP" ]]; then
