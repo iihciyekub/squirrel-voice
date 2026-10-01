@@ -14,15 +14,15 @@ cask "squirrel-voice" do
   postflight_steps do
     run "Squirrel Voice.app/Contents/MacOS/Squirrel Voice",
         args: ["--install"],
-        base: :appdir
+        base: :input_methoddir
     run "/usr/bin/killall", args: ["TextInputMenuAgent"], must_succeed: false
   end
 
   uninstall_preflight_steps do
-    if_path_exists "Squirrel Voice.app/Contents/MacOS/Squirrel Voice", base: :appdir do
+    if_path_exists "Squirrel Voice.app/Contents/MacOS/Squirrel Voice", base: :input_methoddir do
       run "Squirrel Voice.app/Contents/MacOS/Squirrel Voice",
           args:         ["--disable-input-source"],
-          base:         :appdir,
+          base:         :input_methoddir,
           must_succeed: false
     end
     run "/usr/bin/killall", args: ["TextInputMenuAgent"], must_succeed: false
