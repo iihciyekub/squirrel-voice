@@ -192,6 +192,137 @@ index df13876..1d27bdf 100644
 +	<false/>
  </dict>
  </plist>
+diff --git a/resources/InfoPlist.xcstrings b/resources/InfoPlist.xcstrings
+index e304fbe..39ad673 100644
+--- a/resources/InfoPlist.xcstrings
++++ b/resources/InfoPlist.xcstrings
+@@ -7,19 +7,19 @@
+         "en" : {
+           "stringUnit" : {
+             "state" : "translated",
+-            "value" : "Squirrel"
++            "value" : "Squirrel Voice"
+           }
+         },
+         "zh-Hans" : {
+           "stringUnit" : {
+             "state" : "translated",
+-            "value" : "鼠须管"
++            "value" : "鼠须管语音"
+           }
+         },
+         "zh-Hant" : {
+           "stringUnit" : {
+             "state" : "translated",
+-            "value" : "鼠鬚管"
++            "value" : "鼠鬚管語音"
+           }
+         }
+       }
+@@ -31,88 +31,88 @@
+         "en" : {
+           "stringUnit" : {
+             "state" : "translated",
+-            "value" : "Squirrel"
++            "value" : "Squirrel Voice"
+           }
+         },
+         "zh-Hans" : {
+           "stringUnit" : {
+             "state" : "translated",
+-            "value" : "鼠须管"
++            "value" : "鼠须管语音"
+           }
+         },
+         "zh-Hant" : {
+           "stringUnit" : {
+             "state" : "translated",
+-            "value" : "鼠鬚管"
++            "value" : "鼠鬚管語音"
+           }
+         }
+       }
+     },
+-    "im.rime.inputmethod.Squirrel" : {
++    "im.rime.inputmethod.SquirrelVoice" : {
+       "extractionState" : "manual",
+       "localizations" : {
+         "en" : {
+           "stringUnit" : {
+             "state" : "translated",
+-            "value" : "Squirrel"
++            "value" : "Squirrel Voice"
+           }
+         },
+         "zh-Hans" : {
+           "stringUnit" : {
+             "state" : "translated",
+-            "value" : "鼠须管"
++            "value" : "鼠须管语音"
+           }
+         },
+         "zh-Hant" : {
+           "stringUnit" : {
+             "state" : "translated",
+-            "value" : "鼠鬚管"
++            "value" : "鼠鬚管語音"
+           }
+         }
+       }
+     },
+-    "im.rime.inputmethod.Squirrel.Hans" : {
++    "im.rime.inputmethod.SquirrelVoice.Hans" : {
+       "extractionState" : "manual",
+       "localizations" : {
+         "en" : {
+           "stringUnit" : {
+             "state" : "translated",
+-            "value" : "Squirrel - Simplified"
++            "value" : "Squirrel Voice - Simplified"
+           }
+         },
+         "zh-Hans" : {
+           "stringUnit" : {
+             "state" : "translated",
+-            "value" : "鼠须管"
++            "value" : "鼠须管语音"
+           }
+         },
+         "zh-Hant" : {
+           "stringUnit" : {
+             "state" : "translated",
+-            "value" : "鼠须管"
++            "value" : "鼠须管语音"
+           }
+         }
+       }
+     },
+-    "im.rime.inputmethod.Squirrel.Hant" : {
++    "im.rime.inputmethod.SquirrelVoice.Hant" : {
+       "extractionState" : "manual",
+       "localizations" : {
+         "en" : {
+           "stringUnit" : {
+             "state" : "translated",
+-            "value" : "Squirrel - Traditional"
++            "value" : "Squirrel Voice - Traditional"
+           }
+         },
+         "zh-Hans" : {
+           "stringUnit" : {
+             "state" : "translated",
+-            "value" : "鼠鬚管"
++            "value" : "鼠鬚管語音"
+           }
+         },
+         "zh-Hant" : {
+           "stringUnit" : {
+             "state" : "translated",
+-            "value" : "鼠鬚管"
++            "value" : "鼠鬚管語音"
+           }
+         }
+       }
 diff --git a/sources/InputSource.swift b/sources/InputSource.swift
 index a0c80ad..085c58d 100644
 --- a/sources/InputSource.swift
