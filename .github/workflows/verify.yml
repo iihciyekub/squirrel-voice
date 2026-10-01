@@ -1,0 +1,52 @@
+name: Verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Confirm Apple Silicon runner
+        run: test "$(uname -m)" = "arm64"
+
+      - name: Check scripts
+        run: zsh -n scripts/*.sh
+
+      - name: Build native voice helper
+        run: ./build.sh
+
+      - name: Build independent Squirrel Voice bundle
+        env:
+          SQUIRREL_REBUILD_DEPS: "1"
+        run: ./scripts/build-squirrel.sh
+
+      - name: Verify product identity
+        run: |
+          set -euo pipefail
+          APP="build/Squirrel-src/build/Build/Products/Release/Squirrel Voice.app"
+          test -d "$APP"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Contents/Info.plist")" = "im.rime.inputmethod.SquirrelVoice"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :TISInputSourceID' "$APP/Contents/Info.plist")" = "im.rime.inputmethod.SquirrelVoice"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")" = "$(tr -d '[:space:]' < VERSION)"
+          test -x "$APP/Contents/Helpers/squirrel-voice"
+          codesign --verify --deep --strict "$APP"
+
+      - name: Upload unsigned verification app
+        uses: actions/upload-artifact@v4
+        with:
+          name: squirrel-voice-verify-arm64
+          path: build/Squirrel-src/build/Build/Products/Release/Squirrel Voice.app
+          if-no-files-found: error
+

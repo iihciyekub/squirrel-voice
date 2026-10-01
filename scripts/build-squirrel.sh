@@ -69,6 +69,7 @@ else
       -DPYTHON_EXECUTABLE:FILEPATH="$(xcrun -f python3)"
   fi
   make -C "$SRC" deps ARCHS=arm64 MACOSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET"
+  make -C "$SRC" sparkle ARCHS=arm64 MACOSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET"
 fi
 
 mkdir -p "$SRC/build"

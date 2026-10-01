@@ -8,15 +8,22 @@ PROFILE="${APPLE_KEYCHAIN_PROFILE:-wosaide-notary}"
 DIST="$ROOT/dist"
 ZIP="$DIST/SquirrelVoice-$VERSION-arm64-notary.zip"
 
+notary_args=()
+if [[ -n "${APPLE_API_KEY:-}" && -n "${APPLE_API_KEY_ID:-}" && -n "${APPLE_API_ISSUER:-}" ]]; then
+  notary_args=(--key "$APPLE_API_KEY" --key-id "$APPLE_API_KEY_ID" --issuer "$APPLE_API_ISSUER")
+else
+  notary_args=(--keychain-profile "$PROFILE")
+fi
+
 [[ -d "$APP" ]] || { echo "App not found: $APP" >&2; exit 1; }
 mkdir -p "$DIST"
 
 codesign --verify --deep --strict --verbose=2 "$APP"
-xcrun notarytool history --keychain-profile "$PROFILE" >/dev/null
+xcrun notarytool history "${notary_args[@]}" >/dev/null
 
 rm -f "$ZIP"
 /usr/bin/ditto -c -k --keepParent "$APP" "$ZIP"
-xcrun notarytool submit "$ZIP" --keychain-profile "$PROFILE" --wait
+xcrun notarytool submit "$ZIP" "${notary_args[@]}" --wait
 xcrun stapler staple "$APP"
 xcrun stapler validate "$APP"
 spctl --assess --type execute --verbose=4 "$APP"
