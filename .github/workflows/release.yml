@@ -143,5 +143,26 @@ jobs:
           [[ -f "dist/SquirrelVoice-$VERSION-arm64.pkg" ]] && assets+=("dist/SquirrelVoice-$VERSION-arm64.pkg")
           gh release create "$TAG" "${assets[@]}" \
             --title "Squirrel Voice $VERSION" \
-            --notes "Squirrel Voice $VERSION for Apple Silicon macOS. Models are not bundled."
+            --notes "Squirrel Voice $VERSION for Apple Silicon macOS. 已使用 Developer ID 签名并通过 Apple notarization。模型需单独下载。"
+
+      - name: Update Homebrew tap cask
+        run: |
+          set -euo pipefail
+          CASK_TMP="$RUNNER_TEMP/squirrel-voice.rb"
+          cp dist/squirrel-voice.rb "$CASK_TMP"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout -B cask-update origin/main
+          mkdir -p Casks
+          cp "$CASK_TMP" Casks/squirrel-voice.rb
+          git add Casks/squirrel-voice.rb
+
+          if git diff --cached --quiet; then
+            echo "Homebrew Cask is already current."
+          else
+            git commit -m "chore: update Homebrew cask to v$(tr -d '[:space:]' < VERSION)"
+            git push origin HEAD:main
+          fi
 

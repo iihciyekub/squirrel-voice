@@ -1,242 +1,84 @@
 # Squirrel Voice
 
-Lightweight native macOS speech-to-text runtime for Squirrel/Rime, using
-NetEase Youdao **Confucius4-R2T2** GGUF weights and `llama.cpp`/Metal.
+**给 macOS 鼠须管 / Rime 加上本地语音输入。**
 
-The distributable input method is an independent product named **Squirrel Voice**
-with bundle/input-source ID `im.rime.inputmethod.SquirrelVoice`. It installs at
-`/Library/Input Methods/Squirrel Voice.app` and does not replace the official
-`Squirrel.app`. It deliberately keeps using `~/Library/Rime` so existing Rime
-schemas and user configuration can be reused.
+Squirrel Voice 是一个独立的 macOS 输入法，基于 Rime Squirrel，并加入了本地语音转文字。语音识别直接在 Mac 上运行，不需要云端接口，也不需要一直开着 LM Studio。
 
-The design intentionally has no Python, Ollama, LM Studio service, browser,
-HTTP server, or cloud dependency. LM Studio is only one optional place where
-the GGUF files may already exist.
+- 本地运行，语音不会上传到云端
+- 使用 `llama.cpp + Metal`
+- 支持本地流式语音输入
+- 支持连续长时间语音输入，内部会自动滚动分段，不需要手动停下来
+- 与官方 Squirrel 可以同时安装
+- 已使用 Apple Developer ID 签名并通过 Apple notarization
 
-## Current milestone
+## 安装
 
-This first native milestone provides:
+目前支持 **Apple Silicon Mac（M1 / M2 / M3 / M4 / M5…）**，建议 macOS 13 或更新版本。
 
-- pinned `llama.cpp` source (`ad6c66839af3c5646fba8c6c2e2087a1e4e38948`), matching the upstream R2T2 llama backend;
-- in-process GGUF + `mmproj` loading with Metal;
-- R2T2-style 160 ms streaming with rollback and append-only stable deltas;
-- direct WAV testing;
-- direct macOS default-microphone capture through AudioQueue;
-- persistent `--stdio` helper mode for a tiny Squirrel bridge (model loads once);
-- a compact non-activating voice HUD beside the current input caret;
-- a static SF Symbol plus five discrete microphone-level bars (no continuous animation loop);
-- a clickable `xmark.circle` cancel control that uses the same hard-stop path;
-- a compact `cpu` SF Symbol in the HUD that opens model settings without showing a model name;
-- Squirrel menu entries for start/stop voice input, the active voice model, and voice settings;
-- a native AppKit model settings window that scans the default LM Studio model directory,
-  Squirrel Voice's own model directory, and one user-selected custom directory;
-- persistent model selection; the selected GGUF + mmproj paths are passed directly to
-  the bundled helper on the next voice session;
-- hard stop semantics that discard queued audio and never emit stale text after stop;
-- automatic stop when Squirrel's input session is deactivated or its text client becomes invalid;
-- automatic reuse of an existing LM Studio model directory, without starting LM Studio.
-- a reproducible Squirrel 1.1.2 patch that binds **Command+Shift+Space** to the
-  helper and commits stable deltas through Squirrel's existing `IMKTextInput`
-  `insertText` path.
+### 方法一：Homebrew（推荐）
 
-## Models
-
-By default the runtime checks:
-
-1. `R2T2_MODEL_DIR`
-2. `~/.lmstudio/models/netease-youdao/Confucius4-R2T2-GGUF`
-3. `~/Library/Application Support/Squirrel Voice/Models`
-4. `~/Models/Confucius4-R2T2-GGUF`
-
-You can also pass `--model-dir`, or explicit `--model` + `--mmproj` paths.
-
-When more than one official checkpoint exists in the same directory, the
-runtime prefers `Q4_K_M` over `Q8_0` over `f16` for the language model, and
-prefers the `Q8_0` audio projector over `f16`. Explicit `--model` / `--mmproj`
-always override this policy. This keeps the input-method helper lightweight on
-machines where the quantized files have been downloaded.
-
-### Model settings
-
-Open **Voice Input Settings…** from the Squirrel menu, or click the current
-model name in the voice HUD. The window shows the current model, scans
-`~/.lmstudio/models`, lets the user add a custom model directory, and lists
-compatible local model/model-projector pairs with their variant, source and
-combined size. Selecting **Use Selected Model** updates the saved model paths;
-LM Studio itself never needs to be running.
-
-The default family is NetEase Youdao **Confucius4-R2T2-GGUF**. If no explicit
-selection has been saved, Squirrel Voice auto-discovers that family under the
-standard LM Studio path and prefers `Q4_K_M`, then `Q8_0`, then `F16` when those
-variants are present. The recommended model page is:
-
-`https://huggingface.co/netease-youdao/Confucius4-R2T2-GGUF`
-
-The settings model record already includes an `engine` field. v0.1 only marks
-the R2T2/llama.cpp path as automatically compatible because that is the engine
-validated by this project. Additional speech engines can be added later
-without redesigning the HUD or settings window.
-
-Squirrel Voice deliberately does not add a language-correction, terminology,
-prompting, punctuation-rewrite, or second-pass LLM layer. The runtime stays a
-small local speech-to-text path: microphone -> ASR model -> stable text ->
-Squirrel.
-
-## Build
+打开终端，依次执行：
 
 ```bash
-./build.sh
+brew tap iihciyekub/squirrel-voice https://github.com/iihciyekub/squirrel-voice.git
+brew install --cask squirrel-voice
 ```
 
-The bootstrap script fetches only the pinned llama.cpp source needed for a
-reproducible build. Model weights are never copied into this repository.
+安装完成后：
 
-## Smoke test
+1. 打开 **系统设置 → 键盘 → 文本输入 → 编辑**。
+2. 点击 `+`，找到并添加 **Squirrel Voice**。
+3. 切换到 **Squirrel Voice** 输入法。
 
-Load the model only:
+如果刚安装后列表里还没有出现，退出登录一次再进入即可。
+
+以后升级：
 
 ```bash
-./build/squirrel-voice --probe
+brew update
+brew upgrade --cask squirrel-voice
 ```
 
-Transcribe a WAV file:
+### 方法二：手动安装
 
-```bash
-./build/squirrel-voice --wav /path/to/test.wav --language Chinese
-```
+1. 打开 [Releases](https://github.com/iihciyekub/squirrel-voice/releases)。
+2. 下载最新的 `SquirrelVoice-*-arm64.zip`。
+3. 解压后把 **Squirrel Voice.app** 放到 `~/Library/Input Methods/`。
+4. 按上面的步骤，在系统设置里添加 **Squirrel Voice**。
 
-Use the default microphone:
+## 准备语音模型
 
-```bash
-./build/squirrel-voice --mic --language Chinese
-```
+模型不会包含在安装包里，需要单独下载一次。
 
-Persistent helper protocol (intended for Squirrel):
+推荐模型：
 
-```bash
-./build/squirrel-voice --stdio
-# helper prints READY after the model is resident
-# stdin commands: START, STOP, PING, QUIT
-# stdout events: READY, STARTED, L<TAB>mic-level,
-#                D<TAB>stable-delta, STOPPED, ERROR<TAB>message
-```
+[NetEase Youdao Confucius4-R2T2-GGUF](https://huggingface.co/netease-youdao/Confucius4-R2T2-GGUF)
 
-When Squirrel uses the helper, the model stays resident across short dictation
-bursts and the helper exits after 5 minutes of idle time to release memory.
-Set `SQUIRREL_VOICE_IDLE_SECONDS` to override that timeout for development.
+最简单的方法是用 **LM Studio** 下载：
 
-`STOP` is deliberately immediate. Once it is received, microphone capture is
-stopped, pending audio is discarded, and no additional recognition delta is
-allowed to reach Squirrel. This prevents delayed text from appearing after the
-user has already stopped dictation or moved away from the input field.
+- `Confucius4-R2T2-Q4_K_M.gguf`
+- `mmproj-Confucius4-R2T2-f16.gguf`（或 Q8_0 版本）
 
-Dictation does not stop just because the user pauses or stays silent. Normal
-stop is user-controlled via `Command+Shift+Space` or the HUD cancel button.
-Squirrel still stops capture when the active input session/client disappears,
-so microphone capture cannot continue after leaving the input context.
+Squirrel Voice 会自动扫描 LM Studio 默认模型目录，**识别时不需要启动 LM Studio**。
 
-The HUD is deliberately low-cost: it uses a plain rounded `CALayer` instead of
-continuous blur/animation, quantizes microphone level into five visual bands,
-and redraws at most about 8 times per second. The SF Symbol itself is static.
+也可以点击语音 HUD 里的模型图标，打开 **语音输入设置**，手动选择模型所在目录。
 
-## Build the patched Squirrel app
+## 使用
 
-The integration is kept as `patches/squirrel-1.1.2.patch`; the upstream
-Squirrel tree is not vendored into this repository.
+切换到 Squirrel Voice 后：
 
-```bash
-./scripts/build-squirrel.sh
-```
+- `Command + Shift + Space`：开始 / 停止语音输入
+- HUD 中的模型图标：打开语音模型设置
+- HUD 中的 `×`：立即停止语音输入
 
-This prepares a clean Squirrel 1.1.2 source tree under `build/Squirrel-src`,
-applies the patch, reuses the already-installed Squirrel 1.1.2 native
-dependencies when available, builds the Swift/InputMethodKit frontend, copies
-the 7–8 MB native voice helper into
-`Squirrel.app/Contents/Helpers`, and locally signs the resulting development
-app. Model files remain external and are not copied into the input method.
+你可以连续说很久。Squirrel Voice 会在后台自动把长语音分成小段处理，麦克风不会因为分段而停止。
 
-Set `SQUIRREL_REBUILD_DEPS=1` only when you explicitly want to rebuild the
-entire upstream librime/Sparkle dependency graph from source.
+## 隐私
 
-For a local installation (after reviewing the build), run:
+识别过程全部在本机完成。除非你自己下载模型或更新软件，正常语音输入不需要网络连接。
 
-```bash
-./scripts/install-local.sh
-```
+## 开源与许可
 
-The installer validates the built bundle first, then uses the native macOS
-administrator-authentication dialog to replace `/Library/Input Methods/Squirrel.app`
-with `ditto`. It backs up the previous app, verifies the installed signature and
-helper, registers the bundle with LaunchServices, and restarts Squirrel. The
-installer never reads or handles the administrator password itself.
+Squirrel Voice 基于 [Rime Squirrel](https://github.com/rime/squirrel) 修改，项目按 GPLv3 发布。第三方组件和模型仍遵循各自的许可证；模型文件不由本项目重新分发。
 
-## Release and Homebrew
-
-The release version is stored in `VERSION`. A production release uses the
-available Developer ID Application/Installer certificates and Apple
-notarization credentials:
-
-```bash
-./scripts/release-local.sh
-```
-
-This builds and Developer-ID-signs `Squirrel Voice.app`, notarizes and staples
-the app, creates a stapled ZIP, and then attempts to build a signed installer
-package. Model weights are not included in any release artifact.
-
-The Developer ID Application identity and Apple notarization profile are enough
-to produce a distributable, Gatekeeper-accepted ZIP. A publishable PKG also
-requires a **Developer ID Installer** identity with its private key available in
-the current keychain. If that installer identity is unavailable,
-`release-local.sh` creates an **unsigned PKG for local testing only** and skips
-PKG notarization. Do not publish that unsigned package.
-
-The signed + notarized ZIP is the canonical Homebrew artifact. Homebrew's
-`input_method` cask stanza installs `Squirrel Voice.app` into the current
-user's `~/Library/Input Methods`, so Homebrew does not require a Developer ID
-Installer certificate or a PKG. A signed PKG can still be produced as an
-optional system-wide installer when an Installer identity is available.
-
-After a ZIP release is published, generate a cask from
-`homebrew/Casks/squirrel-voice.rb.in` with:
-
-```bash
-SQUIRREL_VOICE_RELEASE_BASE_URL=https://github.com/iihciyekub/squirrel-voice/releases/download \
-SQUIRREL_VOICE_HOMEPAGE=https://github.com/iihciyekub/squirrel-voice \
-./scripts/render-cask.sh
-```
-
-Users can then install from a tap with `brew install --cask squirrel-voice`.
-
-### GitHub Actions release secrets
-
-The `Release` workflow uses the `production-release` Environment. A signed and
-notarized ZIP requires these Environment secrets:
-
-- `MAC_CSC_P12_BASE64`
-- `MAC_CSC_KEY_PASSWORD`
-- `APPLE_API_KEY_P8_BASE64`
-- `APPLE_API_KEY_ID`
-- `APPLE_API_ISSUER`
-
-and the Environment variable `MAC_CSC_NAME` (currently
-`Yongjian Li (2NLAH5MYH8)`).
-
-For a signed/notarized PKG and generated Homebrew Cask, add the optional
-installer identity separately:
-
-- `MAC_INSTALLER_P12_BASE64`
-- `MAC_INSTALLER_P12_PASSWORD`
-
-If the Installer identity is absent, the workflow still publishes the
-Developer-ID-signed and Apple-notarized ZIP and simply skips PKG/Cask output.
-
-Only newly stable text is printed to stdout. Diagnostics go to stderr, which
-keeps stdout suitable for the upcoming Squirrel IPC bridge.
-
-## Attribution
-
-The native llama.cpp/mtmd inference path is adapted from NetEase Youdao's
-Apache-2.0 `Confucius4-R2T2/r2t2_llama/native_ext.cpp`. Model weights remain
-subject to the NetEase Model Use License Agreement and are not redistributed
-by this project.
+开发、构建和 GitHub Actions 发布说明见 [DEVELOPMENT.md](DEVELOPMENT.md)。
