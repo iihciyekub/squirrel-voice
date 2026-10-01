@@ -1,0 +1,5 @@
+build/
+.upstream/
+third_party/llama.cpp/
+.DS_Store
+*.log
