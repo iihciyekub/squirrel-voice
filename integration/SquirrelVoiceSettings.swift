@@ -238,7 +238,7 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
 
   private func buildWindow() {
     let w = NSWindow(
-      contentRect: NSRect(x: 0, y: 0, width: 560, height: 470),
+      contentRect: NSRect(x: 0, y: 0, width: 560, height: 500),
       styleMask: [.titled, .closable, .miniaturizable],
       backing: .buffered,
       defer: false
@@ -341,7 +341,8 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
 
     statusLabel.font = .systemFont(ofSize: 11)
     statusLabel.textColor = .secondaryLabelColor
-    statusLabel.lineBreakMode = .byTruncatingTail
+    statusLabel.lineBreakMode = .byWordWrapping
+    statusLabel.maximumNumberOfLines = 2
 
     let recommended = NSTextField(labelWithString: localized(
       "默认推荐：NetEase Youdao · Confucius4-R2T2-GGUF",
@@ -408,6 +409,7 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
       statusLabel.leadingAnchor.constraint(equalTo: scroll.leadingAnchor),
       statusLabel.topAnchor.constraint(equalTo: scroll.bottomAnchor, constant: 5),
       statusLabel.trailingAnchor.constraint(equalTo: scroll.trailingAnchor),
+      statusLabel.heightAnchor.constraint(equalToConstant: 30),
 
       recommended.leadingAnchor.constraint(equalTo: currentBox.leadingAnchor),
       recommended.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 7),
@@ -434,7 +436,10 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
         self.models = found
         self.tableView.reloadData()
         self.statusLabel.stringValue = found.isEmpty
-          ? self.localized("没有找到兼容的 R2T2 模型。", "No compatible R2T2 models found.")
+          ? self.localized(
+              "未找到语音模型。请先用 LM Studio 下载 Confucius4-R2T2 Q4_K_M + mmproj，下载完成后点「扫描 LM Studio」；也可以选择其它目录。",
+              "No voice model found. Download Confucius4-R2T2 Q4_K_M + mmproj in LM Studio, then click Scan LM Studio, or choose another folder."
+            )
           : self.localized("找到 \(found.count) 个可用模型。", "Found \(found.count) usable models.")
         if let active = self.store.activeModel(),
            let row = found.firstIndex(where: { $0.id == active.id }) {
