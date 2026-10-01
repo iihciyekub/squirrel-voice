@@ -1,6 +1,6 @@
 cask "squirrel-voice" do
-  version "0.1.4"
-  sha256 "06689a45eb3b16294c01185d9ee122123644dad5240100b000b36d68a2da805b"
+  version "0.1.5"
+  sha256 "130bb82940659db2fc67420f1fcd94043f0e2659a3f8a4f42f75ce52e0c58fbd"
 
   url "https://github.com/iihciyekub/squirrel-voice/releases/download/v#{version}/SquirrelVoice-#{version}-arm64.zip"
   name "Squirrel Voice"
