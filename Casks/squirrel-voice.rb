@@ -1,6 +1,6 @@
 cask "squirrel-voice" do
-  version "0.1.3"
-  sha256 "0fd218d814e7e5233f6029ec59d419ff110e5dcf5addcac7d9ad2b77442f8204"
+  version "0.1.4"
+  sha256 "06689a45eb3b16294c01185d9ee122123644dad5240100b000b36d68a2da805b"
 
   url "https://github.com/iihciyekub/squirrel-voice/releases/download/v#{version}/SquirrelVoice-#{version}-arm64.zip"
   name "Squirrel Voice"
@@ -13,8 +13,7 @@ cask "squirrel-voice" do
 
   caveats <<~EOS
     Squirrel Voice is installed for the current user in ~/Library/Input Methods.
-    After the first install, open Squirrel Voice once so macOS can register the input method:
-      open "$HOME/Library/Input Methods/Squirrel Voice.app"
+    Add Squirrel Voice once in System Settings > Keyboard > Text Input > Edit.
     Speech models are stored separately and are not downloaded by Homebrew.
   EOS
 end
