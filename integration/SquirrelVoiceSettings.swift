@@ -289,6 +289,25 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
     customPath.textColor = .secondaryLabelColor
     customPath.lineBreakMode = .byTruncatingMiddle
 
+    [scanButton, chooseButton, clearButton].forEach {
+      $0.setContentHuggingPriority(.required, for: .horizontal)
+      $0.setContentCompressionResistancePriority(.required, for: .horizontal)
+    }
+    lmPath.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+    customPath.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
+    let lmRow = NSStackView(views: [lmPath, scanButton])
+    lmRow.orientation = .horizontal
+    lmRow.alignment = .centerY
+    lmRow.spacing = 8
+    lmRow.distribution = .fill
+
+    let customRow = NSStackView(views: [customPath, chooseButton, clearButton])
+    customRow.orientation = .horizontal
+    customRow.alignment = .centerY
+    customRow.spacing = 8
+    customRow.distribution = .fill
+
     let availableLabel = NSTextField(labelWithString: localized("可用模型", "Available Models"))
     availableLabel.font = .systemFont(ofSize: 13, weight: .semibold)
 
@@ -298,15 +317,21 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
     tableView.delegate = self
     tableView.dataSource = self
     let columns: [(String, String, CGFloat)] = [
-      ("model", localized("模型", "Model"), 190),
-      ("variant", localized("版本", "Variant"), 82),
-      ("source", localized("来源", "Source"), 96),
-      ("size", localized("大小", "Size"), 78)
+      ("active", "", 30),
+      ("model", localized("模型", "Model"), 178),
+      ("variant", localized("版本", "Variant"), 80),
+      ("source", localized("来源", "Source"), 94),
+      ("size", localized("大小", "Size"), 76)
     ]
     for (id, titleText, width) in columns {
       let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier(id))
       column.title = titleText
       column.width = width
+      if id == "active" {
+        column.minWidth = width
+        column.maxWidth = width
+        column.resizingMask = []
+      }
       tableView.addTableColumn(column)
     }
     let scroll = NSScrollView()
@@ -334,8 +359,8 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
     useButton.keyEquivalent = "\r"
 
     let views: [NSView] = [
-      title, subtitle, currentBox, sourcesLabel, lmPath, scanButton, customPath,
-      chooseButton, clearButton, availableLabel, scroll, statusLabel, recommended,
+      title, subtitle, currentBox, sourcesLabel, lmRow, customRow,
+      availableLabel, scroll, statusLabel, recommended,
       viewModelButton, revealButton, useButton
     ]
     views.forEach { $0.translatesAutoresizingMaskIntoConstraints = false; root.addSubview($0) }
@@ -364,22 +389,18 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
 
       sourcesLabel.leadingAnchor.constraint(equalTo: currentBox.leadingAnchor),
       sourcesLabel.topAnchor.constraint(equalTo: currentBox.bottomAnchor, constant: 13),
-      lmPath.leadingAnchor.constraint(equalTo: sourcesLabel.leadingAnchor),
-      lmPath.topAnchor.constraint(equalTo: sourcesLabel.bottomAnchor, constant: 6),
-      lmPath.trailingAnchor.constraint(equalTo: scanButton.leadingAnchor, constant: -8),
-      scanButton.trailingAnchor.constraint(equalTo: currentBox.trailingAnchor),
-      scanButton.centerYAnchor.constraint(equalTo: lmPath.centerYAnchor),
+      lmRow.leadingAnchor.constraint(equalTo: sourcesLabel.leadingAnchor),
+      lmRow.trailingAnchor.constraint(equalTo: currentBox.trailingAnchor),
+      lmRow.topAnchor.constraint(equalTo: sourcesLabel.bottomAnchor, constant: 6),
+      lmRow.heightAnchor.constraint(equalToConstant: 28),
 
-      customPath.leadingAnchor.constraint(equalTo: sourcesLabel.leadingAnchor),
-      customPath.topAnchor.constraint(equalTo: lmPath.bottomAnchor, constant: 7),
-      customPath.trailingAnchor.constraint(equalTo: chooseButton.leadingAnchor, constant: -8),
-      clearButton.trailingAnchor.constraint(equalTo: currentBox.trailingAnchor),
-      clearButton.centerYAnchor.constraint(equalTo: customPath.centerYAnchor),
-      chooseButton.trailingAnchor.constraint(equalTo: clearButton.leadingAnchor, constant: -6),
-      chooseButton.centerYAnchor.constraint(equalTo: customPath.centerYAnchor),
+      customRow.leadingAnchor.constraint(equalTo: sourcesLabel.leadingAnchor),
+      customRow.trailingAnchor.constraint(equalTo: currentBox.trailingAnchor),
+      customRow.topAnchor.constraint(equalTo: lmRow.bottomAnchor, constant: 5),
+      customRow.heightAnchor.constraint(equalToConstant: 28),
 
       availableLabel.leadingAnchor.constraint(equalTo: currentBox.leadingAnchor),
-      availableLabel.topAnchor.constraint(equalTo: customPath.bottomAnchor, constant: 14),
+      availableLabel.topAnchor.constraint(equalTo: customRow.bottomAnchor, constant: 13),
       scroll.leadingAnchor.constraint(equalTo: currentBox.leadingAnchor),
       scroll.trailingAnchor.constraint(equalTo: currentBox.trailingAnchor),
       scroll.topAnchor.constraint(equalTo: availableLabel.bottomAnchor, constant: 6),
@@ -453,6 +474,18 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
   func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
     guard row < models.count, let column = tableColumn else { return nil }
     let model = models[row]
+    if column.identifier.rawValue == "active" {
+      let imageView = NSImageView()
+      imageView.imageScaling = .scaleProportionallyDown
+      imageView.contentTintColor = .systemGreen
+      imageView.image = model.id == store.activeModel()?.id
+        ? NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: localized("当前模型", "Current model"))
+        : nil
+      imageView.toolTip = model.id == store.activeModel()?.id
+        ? localized("当前正在使用", "Currently in use")
+        : nil
+      return imageView
+    }
     let value: String
     switch column.identifier.rawValue {
     case "model": value = model.displayName
@@ -495,6 +528,8 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
     guard row >= 0, row < models.count else { return }
     store.select(models[row])
     updateCurrentCard()
+    tableView.reloadData()
+    tableView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
     onModelChanged?()
   }
 
