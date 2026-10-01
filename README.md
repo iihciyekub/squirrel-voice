@@ -19,7 +19,13 @@ This first native milestone provides:
 - persistent `--stdio` helper mode for a tiny Squirrel bridge (model loads once);
 - a compact non-activating voice HUD beside the current input caret;
 - a static SF Symbol plus five discrete microphone-level bars (no continuous animation loop);
-- a clickable `xmark.circle.fill` cancel control that uses the same hard-stop path;
+- a clickable `xmark.circle` cancel control that uses the same hard-stop path;
+- a clickable current-model button in the HUD (`R2T2` by default) that opens model settings;
+- Squirrel menu entries for start/stop voice input, the active voice model, and voice settings;
+- a native AppKit model settings window that scans the default LM Studio model directory,
+  Squirrel Voice's own model directory, and one user-selected custom directory;
+- persistent model selection; the selected GGUF + mmproj paths are passed directly to
+  the bundled helper on the next voice session;
 - hard stop semantics that discard queued audio and never emit stale text after stop;
 - automatic stop when Squirrel's input session is deactivated or its text client becomes invalid;
 - automatic reuse of an existing LM Studio model directory, without starting LM Studio.
@@ -43,6 +49,27 @@ runtime prefers `Q4_K_M` over `Q8_0` over `f16` for the language model, and
 prefers the `Q8_0` audio projector over `f16`. Explicit `--model` / `--mmproj`
 always override this policy. This keeps the input-method helper lightweight on
 machines where the quantized files have been downloaded.
+
+### Model settings
+
+Open **Voice Input Settings…** from the Squirrel menu, or click the current
+model name in the voice HUD. The window shows the current model, scans
+`~/.lmstudio/models`, lets the user add a custom model directory, and lists
+compatible local model/model-projector pairs with their variant, source and
+combined size. Selecting **Use Selected Model** updates the saved model paths;
+LM Studio itself never needs to be running.
+
+The default family is NetEase Youdao **Confucius4-R2T2-GGUF**. If no explicit
+selection has been saved, Squirrel Voice auto-discovers that family under the
+standard LM Studio path and prefers `Q4_K_M`, then `Q8_0`, then `F16` when those
+variants are present. The recommended model page is:
+
+`https://huggingface.co/netease-youdao/Confucius4-R2T2-GGUF`
+
+The settings model record already includes an `engine` field. v0.1 only marks
+the R2T2/llama.cpp path as automatically compatible because that is the engine
+validated by this project. Additional speech engines can be added later
+without redesigning the HUD or settings window.
 
 ## Build
 

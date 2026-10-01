@@ -155,7 +155,11 @@ private extension SquirrelVoiceBridge {
     let error = Pipe()
     let child = Process()
     child.executableURL = helperURL
-    child.arguments = ["--stdio"]
+    var arguments = ["--stdio"]
+    if let model = SquirrelVoiceModelStore.shared.activeModel() {
+      arguments += ["--model", model.modelPath, "--mmproj", model.mmprojPath]
+    }
+    child.arguments = arguments
     child.standardInput = input
     child.standardOutput = output
     child.standardError = error
@@ -398,16 +402,17 @@ final class SquirrelVoiceHUD: NSPanel {
   }
 
   var onCancel: (() -> Void)?
+  var onModelSettings: (() -> Void)?
 
   private let root = NSView()
   private let symbol = NSImageView()
   private let wave = WaveView()
-  private let label = NSTextField(labelWithString: "")
+  private let modelButton = NSButton()
   private let cancelButton = NSButton()
   private var lastLevelUpdate: TimeInterval = 0
 
   init() {
-    let rect = NSRect(x: 0, y: 0, width: 164, height: 36)
+    let rect = NSRect(x: 0, y: 0, width: 152, height: 36)
     super.init(contentRect: rect, styleMask: .nonactivatingPanel, backing: .buffered, defer: true)
     isOpaque = false
     backgroundColor = .clear
@@ -433,21 +438,25 @@ final class SquirrelVoiceHUD: NSPanel {
     symbol.contentTintColor = .labelColor
     symbol.imageScaling = .scaleProportionallyDown
 
-    label.font = .systemFont(ofSize: 12, weight: .medium)
-    label.textColor = .labelColor
-    label.alignment = .left
-    label.lineBreakMode = .byTruncatingTail
-    label.usesSingleLineMode = true
+    modelButton.isBordered = false
+    modelButton.font = .systemFont(ofSize: 11.5, weight: .medium)
+    modelButton.contentTintColor = .labelColor
+    modelButton.image = NSImage(systemSymbolName: "chevron.down", accessibilityDescription: "Choose voice model")
+    modelButton.imagePosition = .imageTrailing
+    modelButton.imageScaling = .scaleProportionallyDown
+    modelButton.target = self
+    modelButton.action = #selector(modelPressed)
+    modelButton.toolTip = localized(chinese: "选择语音模型", english: "Choose voice model")
 
     cancelButton.isBordered = false
-    cancelButton.image = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: "Cancel voice input")
+    cancelButton.image = NSImage(systemSymbolName: "xmark.circle", accessibilityDescription: "Cancel voice input")
     cancelButton.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 13, weight: .medium)
     cancelButton.contentTintColor = .secondaryLabelColor
     cancelButton.target = self
     cancelButton.action = #selector(cancelPressed)
     cancelButton.toolTip = localized(chinese: "取消语音输入", english: "Cancel voice input")
 
-    [symbol, wave, label, cancelButton].forEach {
+    [symbol, wave, modelButton, cancelButton].forEach {
       $0.translatesAutoresizingMaskIntoConstraints = false
       root.addSubview($0)
     }
@@ -463,12 +472,12 @@ final class SquirrelVoiceHUD: NSPanel {
       wave.widthAnchor.constraint(equalToConstant: 29),
       wave.heightAnchor.constraint(equalToConstant: 22),
 
-      label.leadingAnchor.constraint(equalTo: wave.trailingAnchor, constant: 7),
-      label.centerYAnchor.constraint(equalTo: root.centerYAnchor),
-      label.widthAnchor.constraint(equalToConstant: 62),
-      label.heightAnchor.constraint(equalToConstant: 20),
+      modelButton.leadingAnchor.constraint(equalTo: wave.trailingAnchor, constant: 5),
+      modelButton.centerYAnchor.constraint(equalTo: root.centerYAnchor),
+      modelButton.widthAnchor.constraint(equalToConstant: 54),
+      modelButton.heightAnchor.constraint(equalToConstant: 24),
 
-      cancelButton.leadingAnchor.constraint(equalTo: label.trailingAnchor, constant: 2),
+      cancelButton.leadingAnchor.constraint(equalTo: modelButton.trailingAnchor, constant: 1),
       cancelButton.centerYAnchor.constraint(equalTo: root.centerYAnchor),
       cancelButton.widthAnchor.constraint(equalToConstant: 24),
       cancelButton.heightAnchor.constraint(equalToConstant: 24)
@@ -479,12 +488,12 @@ final class SquirrelVoiceHUD: NSPanel {
 
   func showPreparing(anchor: NSRect) {
     wave.setLevel(0)
-    label.stringValue = localized(chinese: "准备中…", english: "Preparing…")
+    updateModelTitle()
     show(anchor: anchor)
   }
 
   func showListening(anchor: NSRect) {
-    label.stringValue = localized(chinese: "正在听…", english: "Listening…")
+    updateModelTitle()
     show(anchor: anchor)
   }
 
@@ -515,6 +524,14 @@ final class SquirrelVoiceHUD: NSPanel {
 
   @objc private func cancelPressed() {
     onCancel?()
+  }
+
+  @objc private func modelPressed() {
+    onModelSettings?()
+  }
+
+  private func updateModelTitle() {
+    modelButton.title = SquirrelVoiceModelStore.shared.activeModel()?.shortName ?? "R2T2"
   }
 
   private func updateAppearance() {
