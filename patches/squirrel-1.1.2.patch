@@ -339,7 +339,7 @@ index a0c80ad..085c58d 100644
    private lazy var inputSources: [String: TISInputSource] = {
      var inputSources = [String: TISInputSource]()
 diff --git a/sources/Main.swift b/sources/Main.swift
-index dca533b..e762094 100644
+index dca533b..ec77412 100644
 --- a/sources/Main.swift
 +++ b/sources/Main.swift
 @@ -15,10 +15,8 @@ struct SquirrelApp {
@@ -364,7 +364,20 @@ index dca533b..e762094 100644
            return true
          case "--register-input-source", "--install":
            installer.register()
-@@ -72,13 +70,13 @@ struct SquirrelApp {
+@@ -67,18 +65,26 @@ struct SquirrelApp {
+             installer.select()
+           }
+           return true
++        case "--voice-settings":
++          let app = NSApplication.shared
++          app.setActivationPolicy(.regular)
++          let controller = SquirrelVoiceSettingsController()
++          controller.show()
++          app.run()
++          withExtendedLifetime(controller) {}
++          return true
+         case "--build":
+           // Notification
            SquirrelApplicationDelegate.showMessage(msgText: NSLocalizedString("deploy_update", comment: ""))
            // Build all schemas in current directory
            var builderTraits = RimeTraits.rimeStructInit()
@@ -380,7 +393,7 @@ index dca533b..e762094 100644
            return true
          case "--help":
            print(helpDoc)
-@@ -121,12 +119,12 @@ struct SquirrelApp {
+@@ -121,12 +127,12 @@ struct SquirrelApp {
          NSApp.squirrelAppDelegate.setupRime()
          NSApp.squirrelAppDelegate.startRime(fullCheck: false)
          NSApp.squirrelAppDelegate.loadSettings()
@@ -395,6 +408,13 @@ index dca533b..e762094 100644
        rimeAPI.finalize()
      }
      return
+@@ -144,5 +150,6 @@ Install Squirrel:
+   --enable-input-source [source id...]  input source list optional
+   --disable-input-source [source id...] input source list optional
+   --select-input-source [source id]     input source optional
++  --voice-settings                      open Squirrel Voice model settings
+ """
+ }
 diff --git a/sources/SquirrelApplicationDelegate.swift b/sources/SquirrelApplicationDelegate.swift
 index c603760..ea34ccf 100644
 --- a/sources/SquirrelApplicationDelegate.swift

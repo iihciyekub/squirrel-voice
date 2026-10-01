@@ -250,7 +250,7 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
       backing: .buffered,
       defer: false
     )
-    w.title = localized("语音输入", "Voice Input")
+    w.title = localized("Squirrel Voice 设置", "Squirrel Voice Settings")
     w.isReleasedWhenClosed = false
     w.delegate = self
 
