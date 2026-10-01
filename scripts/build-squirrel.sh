@@ -23,7 +23,12 @@ fi
 
 INSTALLED_APP="${SQUIRREL_INSTALLED_APP:-/Library/Input Methods/Squirrel.app}"
 INSTALLED_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$INSTALLED_APP/Contents/Info.plist" 2>/dev/null || true)"
-if [[ "${SQUIRREL_USE_UPSTREAM_PREBUILT:-0}" == "1" ]]; then
+USE_UPSTREAM_PREBUILT="${SQUIRREL_USE_UPSTREAM_PREBUILT:-0}"
+if [[ ! -d "$INSTALLED_APP" && "${SQUIRREL_REBUILD_DEPS:-0}" != "1" ]]; then
+  USE_UPSTREAM_PREBUILT=1
+fi
+
+if [[ "$USE_UPSTREAM_PREBUILT" == "1" ]]; then
   echo "Using upstream Squirrel 1.1.2 CI dependency artifacts..."
   # Upstream Actions checks Squirrel out with submodules enabled. The binary
   # dependency archive supplies librime itself, but Xcode still consumes public

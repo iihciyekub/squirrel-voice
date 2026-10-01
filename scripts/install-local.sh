@@ -29,7 +29,7 @@ if ! /usr/libexec/PlistBuddy -c 'Print :NSMicrophoneUsageDescription' "$APP/Cont
   exit 1
 fi
 
-INSTALLER="$(mktemp /tmp/install-squirrel-voice.XXXXXX.sh)"
+INSTALLER="$(mktemp /tmp/install-squirrel-voice.XXXXXX)"
 trap 'rm -f "$INSTALLER"' EXIT
 
 cat > "$INSTALLER" <<EOF
