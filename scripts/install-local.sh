@@ -4,11 +4,10 @@ set -euo pipefail
 ROOT="${0:A:h:h}"
 SRC="${SQUIRREL_SOURCE_DIR:-$ROOT/build/Squirrel-src}"
 APP="$SRC/build/Build/Products/Release/Squirrel Voice.app"
-DST="/Library/Input Methods/Squirrel Voice.app"
+DST="$HOME/Library/Input Methods/Squirrel Voice.app"
+LEGACY_DST="/Library/Input Methods/Squirrel Voice.app"
 BACKUP_ROOT="$HOME/Library/Application Support/Squirrel Voice/Legacy Backups"
-mkdir -p "$BACKUP_ROOT"
-USER_UID="$(id -u)"
-USER_GID="$(id -g)"
+mkdir -p "${DST:h}" "$BACKUP_ROOT"
 
 if [[ ! -d "$APP" ]]; then
   "$ROOT/scripts/build-squirrel.sh"
@@ -29,29 +28,24 @@ if ! /usr/libexec/PlistBuddy -c 'Print :NSMicrophoneUsageDescription' "$APP/Cont
   exit 1
 fi
 
-INSTALLER="$(mktemp /tmp/install-squirrel-voice.XXXXXX)"
-trap 'rm -f "$INSTALLER"' EXIT
-
-cat > "$INSTALLER" <<EOF
-#!/bin/sh
-set -eu
-SRC='$APP'
-DST='$DST'
-STAMP=\$(date +%Y%m%d-%H%M%S)
-BACKUP='$BACKUP_ROOT/Squirrel Voice.app.backup-'\$STAMP
-if [ -d "\$DST" ]; then
-  /bin/mv "\$DST" "\$BACKUP"
-  /usr/sbin/chown -R '$USER_UID:$USER_GID' "\$BACKUP"
+STAMP="$(date +%Y%m%d-%H%M%S)"
+BACKUP="$BACKUP_ROOT/Squirrel Voice.app.backup-$STAMP"
+if [[ -d "$LEGACY_DST" ]]; then
+  LEGACY_BACKUP="$BACKUP_ROOT/Squirrel Voice.system-backup-$STAMP.app"
+  pkill -f "$LEGACY_DST/Contents/MacOS/Squirrel Voice" 2>/dev/null || true
+  /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
+    -u "$LEGACY_DST" 2>/dev/null || true
+  /usr/bin/osascript \
+    -e 'on run argv' \
+    -e 'do shell script "/bin/mv " & quoted form of item 1 of argv & " " & quoted form of item 2 of argv & " && /usr/sbin/chown -R " & item 3 of argv & ":" & item 4 of argv & " " & quoted form of item 2 of argv with administrator privileges' \
+    -e 'end run' \
+    "$LEGACY_DST" "$LEGACY_BACKUP" "$(id -u)" "$(id -g)"
+  echo "Migrated legacy system install to: $LEGACY_BACKUP"
 fi
-/usr/bin/ditto "\$SRC" "\$DST"
-/usr/sbin/chown -R root:wheel "\$DST"
-printf '%s\n' "\$BACKUP" > /tmp/squirrel-voice-last-backup.txt
-EOF
-chmod 755 "$INSTALLER"
-
-# macOS owns the credential UI. The project never reads or handles the
-# administrator password itself.
-/usr/bin/osascript -e "do shell script \"$INSTALLER\" with administrator privileges"
+if [[ -d "$DST" ]]; then
+  /bin/mv "$DST" "$BACKUP"
+fi
+/usr/bin/ditto "$APP" "$DST"
 
 if ! codesign --verify --deep --strict "$DST"; then
   echo "Installed app failed signature verification." >&2
@@ -65,16 +59,14 @@ fi
 
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
   -f -R -trusted "$DST"
-pkill -f '/Library/Input Methods/Squirrel Voice.app/Contents/MacOS/' 2>/dev/null || true
+pkill -f "$DST/Contents/MacOS/Squirrel Voice" 2>/dev/null || true
 sleep 1
-"$DST/Contents/MacOS/Squirrel Voice" --register-input-source || true
-"$DST/Contents/MacOS/Squirrel Voice" --enable-input-source im.rime.inputmethod.SquirrelVoice.Hans || true
-"$DST/Contents/MacOS/Squirrel Voice" --select-input-source im.rime.inputmethod.SquirrelVoice.Hans || true
+"$DST/Contents/MacOS/Squirrel Voice" --install || true
 killall TextInputMenuAgent 2>/dev/null || true
 open "$DST"
 
 echo "Installed: $DST"
-if [[ -f /tmp/squirrel-voice-last-backup.txt ]]; then
-  echo "Backup: $(cat /tmp/squirrel-voice-last-backup.txt)"
+if [[ -d "$BACKUP" ]]; then
+  echo "Backup: $BACKUP"
 fi
 echo "Use Command+Shift+Space while Squirrel Voice is the active input source to toggle speech input."

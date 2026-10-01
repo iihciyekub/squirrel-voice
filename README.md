@@ -1,21 +1,23 @@
 # Squirrel Voice
 
-**给 macOS 鼠须管 / Rime 加上本地语音输入。**
+**一个独立的 macOS Rime 输入法，内置本地语音输入。**
 
-Squirrel Voice 是一个独立的 macOS 输入法，基于 Rime Squirrel，并加入了本地语音转文字。语音识别直接在 Mac 上运行，不需要云端接口，也不需要一直开着 LM Studio。
+Squirrel Voice 基于 Rime Squirrel，并加入了完全在 Mac 本机运行的语音转文字。
 
-- 本地运行，语音不会上传到云端
-- 使用 `llama.cpp + Metal`
-- 支持本地流式语音输入
-- 支持连续长时间语音输入，内部会自动滚动分段，不需要手动停下来
-- 与官方 Squirrel 可以同时安装
+**不需要提前安装 Squirrel / 鼠须管，也不需要安装 LM Studio。**
+
+- Apple Silicon 原生运行
+- `llama.cpp + Metal`
+- 本地流式语音输入
+- 支持连续长时间语音输入
+- 语音不会上传到云端
 - 已使用 Apple Developer ID 签名并通过 Apple notarization
 
 ## 安装
 
-目前支持 **Apple Silicon Mac（M1 / M2 / M3 / M4 / M5…）**，建议 macOS 13 或更新版本。
+支持 **Apple Silicon Mac（M1 / M2 / M3 / M4 / M5…）**，建议 macOS 13 或更新版本。
 
-### 方法一：Homebrew（推荐）
+### Homebrew（推荐）
 
 打开终端，依次执行：
 
@@ -25,13 +27,11 @@ brew trust iihciyekub/squirrel-voice
 brew install --cask squirrel-voice
 ```
 
-安装完成后：
+安装完成后，Squirrel Voice 会自动注册并启用输入法。
 
-1. 打开 **系统设置 → 键盘 → 文本输入 → 编辑**。
-2. 点击 `+`，找到并添加 **Squirrel Voice**。
-3. 切换到 **Squirrel Voice** 输入法。
+然后从菜单栏输入法菜单切换到 **Squirrel Voice** 即可。
 
-如果刚安装后列表里还没有出现，退出登录一次再进入即可。
+如果菜单栏没有马上刷新，打开一次 **系统设置 → 键盘 → 文本输入**，或者重新登录 macOS 即可。
 
 以后升级：
 
@@ -40,48 +40,53 @@ brew update
 brew upgrade --cask squirrel-voice
 ```
 
-### 方法二：手动安装
+### 手动安装
 
 1. 打开 [Releases](https://github.com/iihciyekub/squirrel-voice/releases)。
 2. 下载最新的 `SquirrelVoice-*-arm64.zip`。
 3. 解压后把 **Squirrel Voice.app** 放到 `~/Library/Input Methods/`。
-4. 按上面的步骤，在系统设置里添加 **Squirrel Voice**。
+4. 打开一次 **Squirrel Voice.app**。它会自动注册并启用输入法。
 
-## 准备语音模型
+如果菜单栏没有马上出现，再打开一次 **系统设置 → 键盘 → 文本输入** 即可。
 
-模型不会包含在安装包里，需要单独下载一次。
+## 第一次使用：下载语音模型
 
-### 方法一：在 Squirrel Voice 中直接下载（推荐）
+切换到 **Squirrel Voice** 后，打开输入法菜单里的 **Voice Input Settings / 语音输入设置**。
 
-打开 **语音输入设置**，点击：
+点击：
 
 ```text
 下载推荐模型
 ```
 
-Squirrel Voice 会自动下载经过验证的：
+Squirrel Voice 会自动下载经过验证的本地模型：
 
 - `Confucius4-R2T2-Q4_K_M.gguf`
 - `mmproj-Confucius4-R2T2-f16.gguf`
 
-下载时会显示进度、已下载大小和速度；可以取消，之后继续下载。下载完成后会自动扫描并选中模型。
+总大小约 **1.75 GB**。
 
-### 方法二：使用 LM Studio 已有模型
+下载过程中会显示：
 
-如果你已经在 LM Studio 下载过模型，可以直接点击 **扫描 LM Studio**，不需要重复下载。
+- 下载进度
+- 已下载 / 总大小
+- 下载速度
+- 取消 / 继续下载
+- 下载失败后的重试
+
+下载完成后会自动扫描并选中模型，不需要再配置其它参数。
+
+## 已经有模型？
+
+如果你以前在 LM Studio 下载过 Confucius4-R2T2，可以在设置里点击 **扫描 LM Studio**，直接复用已有模型。
+
+LM Studio 只是备用模型来源，**识别时不需要运行 LM Studio**。
+
+也可以选择其它本地模型目录。
 
 推荐模型页面：
 
 [NetEase Youdao Confucius4-R2T2-GGUF](https://huggingface.co/netease-youdao/Confucius4-R2T2-GGUF)
-
-LM Studio 中需要：
-
-- `Confucius4-R2T2-Q4_K_M.gguf`
-- `mmproj-Confucius4-R2T2-f16.gguf`（或 Q8_0 版本）
-
-**识别时不需要启动 LM Studio**，它只作为已有模型的来源。
-
-也可以点击语音 HUD 里的模型图标，打开 **语音输入设置**，手动选择模型所在目录。
 
 ## 使用
 
@@ -91,14 +96,22 @@ LM Studio 中需要：
 - HUD 中的模型图标：打开语音模型设置
 - HUD 中的 `×`：立即停止语音输入
 
-你可以连续说很久。Squirrel Voice 会在后台自动把长语音分成小段处理，麦克风不会因为分段而停止。
+可以连续长时间讲话。Squirrel Voice 会在后台自动滚动分段，避免语音越长越慢；分段不会停止麦克风，也不需要手动操作。
+
+## 与官方 Squirrel 的关系
+
+Squirrel Voice 自己已经包含运行所需的 Rime / Squirrel 组件，**不依赖官方 Squirrel.app**。
+
+如果你的电脑已经安装官方 Squirrel，也可以保留；但为了避免两个输入法名称和设置入口混淆，建议普通用户只启用其中一个。
+
+现有的 `~/Library/Rime` 配置可以继续使用。
 
 ## 隐私
 
-识别过程全部在本机完成。除非你自己下载模型或更新软件，正常语音输入不需要网络连接。
+识别过程全部在本机完成。除了下载模型或软件更新，正常语音输入不需要网络连接。
 
 ## 开源与许可
 
-Squirrel Voice 基于 [Rime Squirrel](https://github.com/rime/squirrel) 修改，项目按 GPLv3 发布。第三方组件和模型仍遵循各自的许可证；模型文件不由本项目重新分发。
+Squirrel Voice 基于 [Rime Squirrel](https://github.com/rime/squirrel) 修改，项目按 GPLv3 发布。第三方组件和模型仍遵循各自许可证；模型文件不由本项目重新分发。
 
 开发、构建和 GitHub Actions 发布说明见 [DEVELOPMENT.md](DEVELOPMENT.md)。

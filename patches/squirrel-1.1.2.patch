@@ -324,10 +324,10 @@ index e304fbe..39ad673 100644
          }
        }
 diff --git a/sources/InputSource.swift b/sources/InputSource.swift
-index a0c80ad..8e13762 100644
+index a0c80ad..c6638e5 100644
 --- a/sources/InputSource.swift
 +++ b/sources/InputSource.swift
-@@ -11,21 +11,19 @@ import InputMethodKit
+@@ -11,21 +11,40 @@ import InputMethodKit
  final class SquirrelInstaller {
    enum InputMode: String, CaseIterable {
      static let primary = Self.hans
@@ -350,10 +350,31 @@ index a0c80ad..8e13762 100644
      return inputSources
 -  }()
 +  }
++
++  func install() {
++    let previouslyEnabled = enabledModes()
++    register()
++
++    guard waitForInputSource(.primary) else {
++      print("Squirrel Voice registration did not become visible to TIS in time.")
++      return
++    }
++
++    // Fresh install: make the input method immediately usable. On upgrades,
++    // preserve the user's existing enabled/selected input-source choices.
++    if previouslyEnabled.isEmpty {
++      enable(modes: [.primary])
++      guard waitForEnabled(.primary) else {
++        print("Squirrel Voice primary input mode did not become enabled in time.")
++        return
++      }
++      select(mode: .primary)
++    }
++  }
  
    func enabledModes() -> [InputMode] {
      var enabledModes = Set<InputMode>()
-@@ -47,8 +45,8 @@ final class SquirrelInstaller {
+@@ -47,8 +66,8 @@ final class SquirrelInstaller {
        // Already registered.
        return
      }
@@ -364,7 +385,41 @@ index a0c80ad..8e13762 100644
    }
  
    func enable(modes: [InputMode] = []) {
-@@ -103,6 +101,7 @@ final class SquirrelInstaller {
+@@ -78,17 +97,24 @@ final class SquirrelInstaller {
+         return
+       }
+     }
+-    for (mode, inputSource) in getInputSource(modes: [modeToSelect]) {
+-      if let enabled = getBool(for: inputSource, key: kTISPropertyInputSourceIsEnabled),
+-         let selectable = getBool(for: inputSource, key: kTISPropertyInputSourceIsSelectCapable),
+-         let selected = getBool(for: inputSource, key: kTISPropertyInputSourceIsSelected),
+-         enabled && selectable && !selected {
+-        let error = TISSelectInputSource(inputSource)
+-        print("Selection \(error == noErr ? "succeeds" : "fails") for input source: \(mode.rawValue)")
+-      } else {
+-        print("Failed to select \(mode.rawValue)")
++    for attempt in 0..<20 {
++      for (mode, inputSource) in getInputSource(modes: [modeToSelect]) {
++        if let selected = getBool(for: inputSource, key: kTISPropertyInputSourceIsSelected), selected {
++          return
++        }
++        if let enabled = getBool(for: inputSource, key: kTISPropertyInputSourceIsEnabled),
++           let selectable = getBool(for: inputSource, key: kTISPropertyInputSourceIsSelectCapable),
++           enabled && selectable {
++          let error = TISSelectInputSource(inputSource)
++          if error == noErr {
++            print("Selection succeeds for input source: \(mode.rawValue)")
++            return
++          }
++        }
+       }
++      if attempt < 19 { Thread.sleep(forTimeInterval: 0.1) }
+     }
++    print("Failed to select input source: \(modeToSelect.rawValue)")
+   }
+ 
+   func disable(modes: [InputMode] = []) {
+@@ -103,6 +129,7 @@ final class SquirrelInstaller {
  
    private func getInputSource(modes: [InputMode]) -> [InputMode: TISInputSource] {
      var matchingSources = [InputMode: TISInputSource]()
@@ -372,8 +427,31 @@ index a0c80ad..8e13762 100644
      for mode in modes {
        if let inputSource = inputSources[mode.rawValue] {
          matchingSources[mode] = inputSource
+@@ -111,6 +138,22 @@ final class SquirrelInstaller {
+     return matchingSources
+   }
+ 
++  private func waitForInputSource(_ mode: InputMode, attempts: Int = 20) -> Bool {
++    for _ in 0..<attempts {
++      if getInputSource(modes: [mode])[mode] != nil { return true }
++      Thread.sleep(forTimeInterval: 0.1)
++    }
++    return false
++  }
++
++  private func waitForEnabled(_ mode: InputMode, attempts: Int = 20) -> Bool {
++    for _ in 0..<attempts {
++      if enabledModes().contains(mode) { return true }
++      Thread.sleep(forTimeInterval: 0.1)
++    }
++    return false
++  }
++
+   private func getBool(for inputSource: TISInputSource, key: CFString!) -> Bool? {
+     let enabledRef = TISGetInputSourceProperty(inputSource, key)
+     guard let enabled = unsafeBitCast(enabledRef, to: CFBoolean?.self) else { return nil }
 diff --git a/sources/Main.swift b/sources/Main.swift
-index dca533b..3da11bf 100644
+index dca533b..fe2a15c 100644
 --- a/sources/Main.swift
 +++ b/sources/Main.swift
 @@ -15,10 +15,8 @@ struct SquirrelApp {
@@ -389,16 +467,24 @@ index dca533b..3da11bf 100644
  
    // swiftlint:disable:next cyclomatic_complexity
    static func main() {
-@@ -35,7 +33,7 @@ struct SquirrelApp {
+@@ -35,11 +33,14 @@ struct SquirrelApp {
            runningSquirrels.forEach { $0.terminate() }
            return true
          case "--reload":
 -          DistributedNotificationCenter.default().postNotificationName(.init("SquirrelReloadNotification"), object: nil)
 +          DistributedNotificationCenter.default().postNotificationName(.init("SquirrelVoiceReloadNotification"), object: nil)
            return true
-         case "--register-input-source", "--install":
+-        case "--register-input-source", "--install":
++        case "--register-input-source":
            installer.register()
-@@ -67,18 +65,24 @@ struct SquirrelApp {
+           return true
++        case "--install":
++          installer.install()
++          return true
+         case "--enable-input-source":
+           if args.count > 2 {
+             let modes = args[2...].map { SquirrelInstaller.InputMode(rawValue: $0) }.compactMap { $0 }
+@@ -67,18 +68,24 @@ struct SquirrelApp {
              installer.select()
            }
            return true
@@ -425,7 +511,15 @@ index dca533b..3da11bf 100644
            return true
          case "--help":
            print(helpDoc)
-@@ -121,12 +125,12 @@ struct SquirrelApp {
+@@ -87,6 +94,7 @@ struct SquirrelApp {
+           break
+         }
+       }
++      installer.install()
+       return false
+     }
+     if handled {
+@@ -121,12 +129,12 @@ struct SquirrelApp {
          NSApp.squirrelAppDelegate.setupRime()
          NSApp.squirrelAppDelegate.startRime(fullCheck: false)
          NSApp.squirrelAppDelegate.loadSettings()
@@ -440,7 +534,13 @@ index dca533b..3da11bf 100644
        rimeAPI.finalize()
      }
      return
-@@ -144,5 +148,6 @@ Install Squirrel:
+@@ -140,9 +148,11 @@ Perform actions:
+   --sync                     sync user data
+   --build                    build all schemas in current directory
+ Install Squirrel:
+-  --install, --register-input-source    register input source
++  --install                            register and enable Squirrel Voice
++  --register-input-source              register input source
    --enable-input-source [source id...]  input source list optional
    --disable-input-source [source id...] input source list optional
    --select-input-source [source id]     input source optional
