@@ -324,10 +324,10 @@ index e304fbe..39ad673 100644
          }
        }
 diff --git a/sources/InputSource.swift b/sources/InputSource.swift
-index a0c80ad..d05acd5 100644
+index a0c80ad..9b727b7 100644
 --- a/sources/InputSource.swift
 +++ b/sources/InputSource.swift
-@@ -11,21 +11,43 @@ import InputMethodKit
+@@ -11,21 +11,42 @@ import InputMethodKit
  final class SquirrelInstaller {
    enum InputMode: String, CaseIterable {
      static let primary = Self.hans
@@ -372,12 +372,11 @@ index a0c80ad..d05acd5 100644
 +      print("Squirrel Voice primary input mode did not become enabled in time.")
 +      return
 +    }
-+    select(mode: .primary)
 +  }
  
    func enabledModes() -> [InputMode] {
      var enabledModes = Set<InputMode>()
-@@ -47,8 +69,8 @@ final class SquirrelInstaller {
+@@ -47,8 +68,8 @@ final class SquirrelInstaller {
        // Already registered.
        return
      }
@@ -388,7 +387,7 @@ index a0c80ad..d05acd5 100644
    }
  
    func enable(modes: [InputMode] = []) {
-@@ -78,17 +100,24 @@ final class SquirrelInstaller {
+@@ -78,17 +99,24 @@ final class SquirrelInstaller {
          return
        }
      }
@@ -422,7 +421,7 @@ index a0c80ad..d05acd5 100644
    }
  
    func disable(modes: [InputMode] = []) {
-@@ -103,6 +132,7 @@ final class SquirrelInstaller {
+@@ -103,6 +131,7 @@ final class SquirrelInstaller {
  
    private func getInputSource(modes: [InputMode]) -> [InputMode: TISInputSource] {
      var matchingSources = [InputMode: TISInputSource]()
@@ -430,7 +429,7 @@ index a0c80ad..d05acd5 100644
      for mode in modes {
        if let inputSource = inputSources[mode.rawValue] {
          matchingSources[mode] = inputSource
-@@ -111,6 +141,22 @@ final class SquirrelInstaller {
+@@ -111,6 +140,22 @@ final class SquirrelInstaller {
      return matchingSources
    }
  
