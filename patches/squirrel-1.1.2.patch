@@ -324,10 +324,10 @@ index e304fbe..39ad673 100644
          }
        }
 diff --git a/sources/InputSource.swift b/sources/InputSource.swift
-index a0c80ad..085c58d 100644
+index a0c80ad..8e13762 100644
 --- a/sources/InputSource.swift
 +++ b/sources/InputSource.swift
-@@ -11,8 +11,8 @@ import InputMethodKit
+@@ -11,21 +11,19 @@ import InputMethodKit
  final class SquirrelInstaller {
    enum InputMode: String, CaseIterable {
      static let primary = Self.hans
@@ -336,8 +336,42 @@ index a0c80ad..085c58d 100644
 +    case hans = "im.rime.inputmethod.SquirrelVoice.Hans"
 +    case hant = "im.rime.inputmethod.SquirrelVoice.Hant"
    }
-   private lazy var inputSources: [String: TISInputSource] = {
+-  private lazy var inputSources: [String: TISInputSource] = {
++  private func currentInputSources() -> [String: TISInputSource] {
      var inputSources = [String: TISInputSource]()
+-    var matchingSources = [InputMode: TISInputSource]()
+     let sourceList = TISCreateInputSourceList(nil, true).takeRetainedValue() as! [TISInputSource]
+     for inputSource in sourceList {
+       let sourceIDRef = TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceID)
+       guard let sourceID = unsafeBitCast(sourceIDRef, to: CFString?.self) as String? else { continue }
+-      // print("[DEBUG] Examining input source: \(sourceID)")
+       inputSources[sourceID] = inputSource
+     }
+     return inputSources
+-  }()
++  }
+ 
+   func enabledModes() -> [InputMode] {
+     var enabledModes = Set<InputMode>()
+@@ -47,8 +45,8 @@ final class SquirrelInstaller {
+       // Already registered.
+       return
+     }
+-    TISRegisterInputSource(SquirrelApp.appDir as CFURL)
+-    print("Registered input source from \(SquirrelApp.appDir)")
++    let error = TISRegisterInputSource(SquirrelApp.appDir as CFURL)
++    print("Register \(error == noErr ? "succeeds" : "fails (\(error))") from \(SquirrelApp.appDir)")
+   }
+ 
+   func enable(modes: [InputMode] = []) {
+@@ -103,6 +101,7 @@ final class SquirrelInstaller {
+ 
+   private func getInputSource(modes: [InputMode]) -> [InputMode: TISInputSource] {
+     var matchingSources = [InputMode: TISInputSource]()
++    let inputSources = currentInputSources()
+     for mode in modes {
+       if let inputSource = inputSources[mode.rawValue] {
+         matchingSources[mode] = inputSource
 diff --git a/sources/Main.swift b/sources/Main.swift
 index dca533b..3da11bf 100644
 --- a/sources/Main.swift

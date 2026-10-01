@@ -68,6 +68,9 @@ fi
 pkill -f '/Library/Input Methods/Squirrel Voice.app/Contents/MacOS/' 2>/dev/null || true
 sleep 1
 "$DST/Contents/MacOS/Squirrel Voice" --register-input-source || true
+"$DST/Contents/MacOS/Squirrel Voice" --enable-input-source im.rime.inputmethod.SquirrelVoice.Hans || true
+"$DST/Contents/MacOS/Squirrel Voice" --select-input-source im.rime.inputmethod.SquirrelVoice.Hans || true
+killall TextInputMenuAgent 2>/dev/null || true
 open "$DST"
 
 echo "Installed: $DST"
