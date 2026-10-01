@@ -18,7 +18,7 @@
 
 ## 安装初始化
 
-Squirrel Voice 是独立输入法，不要求系统预装官方 Squirrel。`Squirrel Voice --install` 是统一初始化入口：首次安装会注册输入源、等待 TIS 刷新、启用默认模式并选中 Squirrel Voice；升级时如果用户已经启用了 Squirrel Voice，则保留现有选择。
+Squirrel Voice 是独立输入法，不要求系统预装官方 Squirrel。`Squirrel Voice --install` 是统一初始化入口：真正的首次安装会注册输入源、等待 TIS 刷新、启用默认模式并选中 Squirrel Voice；迁移或升级时如果 macOS 已恢复 Hans/Hant，则保留现有模式选择，不强行覆盖。
 
 Homebrew Cask 的 `postflight` 调用同一个 `--install`，随后刷新 `TextInputMenuAgent`。卸载前会禁用 Squirrel Voice 输入源。
 
