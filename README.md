@@ -21,8 +21,6 @@ This first native milestone provides:
 - a static SF Symbol plus five discrete microphone-level bars (no continuous animation loop);
 - a clickable `xmark.circle.fill` cancel control that uses the same hard-stop path;
 - hard stop semantics that discard queued audio and never emit stale text after stop;
-- automatic stop after speech followed by about 1.8 seconds of silence;
-- automatic stop after about 10 seconds when voice input was opened but no speech is detected;
 - automatic stop when Squirrel's input session is deactivated or its text client becomes invalid;
 - automatic reuse of an existing LM Studio model directory, without starting LM Studio.
 - a reproducible Squirrel 1.1.2 patch that binds **Command+Shift+Space** to the
@@ -89,18 +87,15 @@ When Squirrel uses the helper, the model stays resident across short dictation
 bursts and the helper exits after 5 minutes of idle time to release memory.
 Set `SQUIRREL_VOICE_IDLE_SECONDS` to override that timeout for development.
 
-Voice auto-stop defaults can also be tuned for development:
-
-```text
-SQUIRREL_VOICE_SILENCE_SECONDS=1.8
-SQUIRREL_VOICE_NO_SPEECH_SECONDS=10
-SQUIRREL_VOICE_SPEECH_LEVEL=0.06
-```
-
 `STOP` is deliberately immediate. Once it is received, microphone capture is
 stopped, pending audio is discarded, and no additional recognition delta is
 allowed to reach Squirrel. This prevents delayed text from appearing after the
 user has already stopped dictation or moved away from the input field.
+
+Dictation does not stop just because the user pauses or stays silent. Normal
+stop is user-controlled via `Command+Shift+Space` or the HUD cancel button.
+Squirrel still stops capture when the active input session/client disappears,
+so microphone capture cannot continue after leaving the input context.
 
 The HUD is deliberately low-cost: it uses a plain rounded `CALayer` instead of
 continuous blur/animation, quantizes microphone level into five visual bands,

@@ -29,9 +29,6 @@ final class SquirrelVoiceBridge {
   private var errorPipe: Pipe?
   private var outputBuffer = Data()
   private var idleShutdownWorkItem: DispatchWorkItem?
-  private var silenceStopWorkItem: DispatchWorkItem?
-  private var noSpeechStopWorkItem: DispatchWorkItem?
-  private var speechDetected = false
 
   private var idleUnloadDelay: TimeInterval {
     if let raw = ProcessInfo.processInfo.environment["SQUIRREL_VOICE_IDLE_SECONDS"],
@@ -39,30 +36,6 @@ final class SquirrelVoiceBridge {
       return value
     }
     return 300
-  }
-
-  private var silenceStopDelay: TimeInterval {
-    if let raw = ProcessInfo.processInfo.environment["SQUIRREL_VOICE_SILENCE_SECONDS"],
-       let value = TimeInterval(raw), value >= 0.5 {
-      return value
-    }
-    return 1.8
-  }
-
-  private var noSpeechStopDelay: TimeInterval {
-    if let raw = ProcessInfo.processInfo.environment["SQUIRREL_VOICE_NO_SPEECH_SECONDS"],
-       let value = TimeInterval(raw), value >= 1 {
-      return value
-    }
-    return 10
-  }
-
-  private var speechLevelThreshold: Double {
-    if let raw = ProcessInfo.processInfo.environment["SQUIRREL_VOICE_SPEECH_LEVEL"],
-       let value = Double(raw), value > 0, value < 1 {
-      return value
-    }
-    return 0.06
   }
 
   init(onDelta: @escaping (String) -> Void,
@@ -132,7 +105,6 @@ final class SquirrelVoiceBridge {
   func shutdown() {
     queue.sync {
       cancelIdleShutdown()
-      cancelVoiceTimers()
       pendingStart = false
       if process?.isRunning == true {
         send("QUIT")
@@ -246,8 +218,6 @@ private extension SquirrelVoiceBridge {
       }
     case "STARTED":
       state = .listening
-      speechDetected = false
-      scheduleNoSpeechStop()
       reportStarted()
     case "D":
       guard !value.isEmpty else { return }
@@ -255,9 +225,7 @@ private extension SquirrelVoiceBridge {
     case "L":
       guard let level = Double(value) else { return }
       reportLevel(level)
-      updateAutoStop(level: level)
     case "STOPPED":
-      cancelVoiceTimers()
       state = .ready
       reportStopped()
       if pendingStart {
@@ -267,7 +235,6 @@ private extension SquirrelVoiceBridge {
         scheduleIdleShutdown()
       }
     case "ERROR":
-      cancelVoiceTimers()
       state = .ready
       reportStopped()
       reportError(value.isEmpty ? "voice helper error" : value)
@@ -283,43 +250,6 @@ private extension SquirrelVoiceBridge {
     cancelIdleShutdown()
     state = .starting
     send("START")
-  }
-
-  func updateAutoStop(level: Double) {
-    guard state == .listening else { return }
-    if level >= speechLevelThreshold {
-      speechDetected = true
-      noSpeechStopWorkItem?.cancel()
-      noSpeechStopWorkItem = nil
-      silenceStopWorkItem?.cancel()
-      silenceStopWorkItem = nil
-    } else if speechDetected && silenceStopWorkItem == nil {
-      let work = DispatchWorkItem { [weak self] in
-        guard let self, self.state == .listening, self.speechDetected else { return }
-        self.stopListening()
-      }
-      silenceStopWorkItem = work
-      queue.asyncAfter(deadline: .now() + silenceStopDelay, execute: work)
-    }
-  }
-
-  func scheduleNoSpeechStop() {
-    noSpeechStopWorkItem?.cancel()
-    guard noSpeechStopDelay > 0 else { return }
-    let work = DispatchWorkItem { [weak self] in
-      guard let self, self.state == .listening, !self.speechDetected else { return }
-      self.stopListening()
-    }
-    noSpeechStopWorkItem = work
-    queue.asyncAfter(deadline: .now() + noSpeechStopDelay, execute: work)
-  }
-
-  func cancelVoiceTimers() {
-    silenceStopWorkItem?.cancel()
-    silenceStopWorkItem = nil
-    noSpeechStopWorkItem?.cancel()
-    noSpeechStopWorkItem = nil
-    speechDetected = false
   }
 
   func scheduleIdleShutdown() {
@@ -342,7 +272,6 @@ private extension SquirrelVoiceBridge {
 
   func stopListening() {
     guard state == .starting || state == .listening else { return }
-    cancelVoiceTimers()
     state = .stopping
     reportStopped()
     send("STOP")
@@ -412,7 +341,6 @@ private extension SquirrelVoiceBridge {
 
   func cleanup() {
     cancelIdleShutdown()
-    cancelVoiceTimers()
     outputPipe?.fileHandleForReading.readabilityHandler = nil
     errorPipe?.fileHandleForReading.readabilityHandler = nil
     try? inputPipe?.fileHandleForWriting.close()
@@ -503,18 +431,14 @@ final class SquirrelVoiceHUD: NSPanel {
     symbol.image = symbolImage
     symbol.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 16, weight: .medium)
     symbol.contentTintColor = .labelColor
-    symbol.frame = NSRect(x: 10, y: 8, width: 20, height: 20)
+    symbol.imageScaling = .scaleProportionallyDown
 
-    wave.frame = NSRect(x: 34, y: 7, width: 29, height: 22)
-    wave.autoresizingMask = [.maxXMargin]
-
-    label.frame = NSRect(x: 70, y: 8, width: 62, height: 20)
     label.font = .systemFont(ofSize: 12, weight: .medium)
     label.textColor = .labelColor
     label.alignment = .left
     label.lineBreakMode = .byTruncatingTail
+    label.usesSingleLineMode = true
 
-    cancelButton.frame = NSRect(x: 134, y: 6, width: 24, height: 24)
     cancelButton.isBordered = false
     cancelButton.image = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: "Cancel voice input")
     cancelButton.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 13, weight: .medium)
@@ -523,10 +447,32 @@ final class SquirrelVoiceHUD: NSPanel {
     cancelButton.action = #selector(cancelPressed)
     cancelButton.toolTip = localized(chinese: "取消语音输入", english: "Cancel voice input")
 
-    root.addSubview(symbol)
-    root.addSubview(wave)
-    root.addSubview(label)
-    root.addSubview(cancelButton)
+    [symbol, wave, label, cancelButton].forEach {
+      $0.translatesAutoresizingMaskIntoConstraints = false
+      root.addSubview($0)
+    }
+
+    NSLayoutConstraint.activate([
+      symbol.leadingAnchor.constraint(equalTo: root.leadingAnchor, constant: 10),
+      symbol.centerYAnchor.constraint(equalTo: root.centerYAnchor),
+      symbol.widthAnchor.constraint(equalToConstant: 20),
+      symbol.heightAnchor.constraint(equalToConstant: 20),
+
+      wave.leadingAnchor.constraint(equalTo: symbol.trailingAnchor, constant: 4),
+      wave.centerYAnchor.constraint(equalTo: root.centerYAnchor),
+      wave.widthAnchor.constraint(equalToConstant: 29),
+      wave.heightAnchor.constraint(equalToConstant: 22),
+
+      label.leadingAnchor.constraint(equalTo: wave.trailingAnchor, constant: 7),
+      label.centerYAnchor.constraint(equalTo: root.centerYAnchor),
+      label.widthAnchor.constraint(equalToConstant: 62),
+      label.heightAnchor.constraint(equalToConstant: 20),
+
+      cancelButton.leadingAnchor.constraint(equalTo: label.trailingAnchor, constant: 2),
+      cancelButton.centerYAnchor.constraint(equalTo: root.centerYAnchor),
+      cancelButton.widthAnchor.constraint(equalToConstant: 24),
+      cancelButton.heightAnchor.constraint(equalToConstant: 24)
+    ])
     contentView = root
     updateAppearance()
   }
