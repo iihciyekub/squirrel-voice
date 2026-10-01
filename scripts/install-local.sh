@@ -5,6 +5,10 @@ ROOT="${0:A:h:h}"
 SRC="${SQUIRREL_SOURCE_DIR:-$ROOT/build/Squirrel-src}"
 APP="$SRC/build/Build/Products/Release/Squirrel Voice.app"
 DST="/Library/Input Methods/Squirrel Voice.app"
+BACKUP_ROOT="$HOME/Library/Application Support/Squirrel Voice/Legacy Backups"
+mkdir -p "$BACKUP_ROOT"
+USER_UID="$(id -u)"
+USER_GID="$(id -g)"
 
 if [[ ! -d "$APP" ]]; then
   "$ROOT/scripts/build-squirrel.sh"
@@ -34,9 +38,10 @@ set -eu
 SRC='$APP'
 DST='$DST'
 STAMP=\$(date +%Y%m%d-%H%M%S)
-BACKUP="/Library/Input Methods/Squirrel Voice.app.backup-\$STAMP"
+BACKUP='$BACKUP_ROOT/Squirrel Voice.app.backup-'\$STAMP
 if [ -d "\$DST" ]; then
   /bin/mv "\$DST" "\$BACKUP"
+  /usr/sbin/chown -R '$USER_UID:$USER_GID' "\$BACKUP"
 fi
 /usr/bin/ditto "\$SRC" "\$DST"
 /usr/sbin/chown -R root:wheel "\$DST"
