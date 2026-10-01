@@ -30,6 +30,7 @@ fi
 
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP="$BACKUP_ROOT/Squirrel Voice.app.backup-$STAMP"
+FRESH_INSTALL=0
 if [[ -d "$LEGACY_DST" ]]; then
   LEGACY_BACKUP="$BACKUP_ROOT/Squirrel Voice.system-backup-$STAMP.app"
   pkill -f "$LEGACY_DST/Contents/MacOS/Squirrel Voice" 2>/dev/null || true
@@ -55,6 +56,7 @@ if [[ -d "$DST" ]]; then
   /bin/rm -rf "$DST/Contents"
   /usr/bin/ditto "$APP/Contents" "$DST/Contents"
 else
+  FRESH_INSTALL=1
   /usr/bin/ditto "$APP" "$DST"
 fi
 
@@ -68,8 +70,10 @@ if [[ ! -x "$DST/Contents/Helpers/squirrel-voice" ]]; then
   exit 1
 fi
 
-/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
-  -f -R -trusted "$DST"
+if [[ "$FRESH_INSTALL" == "1" ]]; then
+  /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
+    -f -R -trusted "$DST"
+fi
 
 echo "Installed: $DST"
 if [[ -d "$BACKUP" ]]; then
