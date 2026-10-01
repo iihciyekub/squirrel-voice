@@ -80,3 +80,12 @@ git push origin main v0.1.1
 - 分段只重置 ASR 内部状态，不停止麦克风或用户会话。
 
 60.66 秒重复语音回归测试可以完整处理，实测处理时间约 39.5 秒。
+
+## 推荐模型下载
+
+`SquirrelVoiceModelDownloadManager` 使用原生 `URLSessionDownloadTask` 直接从官方 Hugging Face 仓库下载经过验证的 Q4_K_M 主模型和 F16 mmproj。
+
+- 保存目录：`~/Library/Application Support/Squirrel Voice/Models/`
+- 支持进度、速度、取消和断点续传
+- 下载完成后检查 GGUF 文件头并自动扫描/选中
+- LM Studio 和自定义目录仍保留为备用模型来源

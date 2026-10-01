@@ -18,5 +18,6 @@ git -C "$SRC" clean -fd
 git -C "$SRC" apply "$ROOT/patches/squirrel-1.1.2.patch"
 cp "$ROOT/integration/SquirrelVoiceBridge.swift" "$SRC/sources/SquirrelVoiceBridge.swift"
 cp "$ROOT/integration/SquirrelVoiceSettings.swift" "$SRC/sources/SquirrelVoiceSettings.swift"
+cp "$ROOT/integration/SquirrelVoiceModelDownload.swift" "$SRC/sources/SquirrelVoiceModelDownload.swift"
 
 echo "Prepared patched Squirrel $TAG at: $SRC"

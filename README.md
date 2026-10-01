@@ -51,16 +51,35 @@ brew upgrade --cask squirrel-voice
 
 模型不会包含在安装包里，需要单独下载一次。
 
-推荐模型：
+### 方法一：在 Squirrel Voice 中直接下载（推荐）
+
+打开 **语音输入设置**，点击：
+
+```text
+下载推荐模型
+```
+
+Squirrel Voice 会自动下载经过验证的：
+
+- `Confucius4-R2T2-Q4_K_M.gguf`
+- `mmproj-Confucius4-R2T2-f16.gguf`
+
+下载时会显示进度、已下载大小和速度；可以取消，之后继续下载。下载完成后会自动扫描并选中模型。
+
+### 方法二：使用 LM Studio 已有模型
+
+如果你已经在 LM Studio 下载过模型，可以直接点击 **扫描 LM Studio**，不需要重复下载。
+
+推荐模型页面：
 
 [NetEase Youdao Confucius4-R2T2-GGUF](https://huggingface.co/netease-youdao/Confucius4-R2T2-GGUF)
 
-最简单的方法是用 **LM Studio** 下载：
+LM Studio 中需要：
 
 - `Confucius4-R2T2-Q4_K_M.gguf`
 - `mmproj-Confucius4-R2T2-f16.gguf`（或 Q8_0 版本）
 
-Squirrel Voice 会自动扫描 LM Studio 默认模型目录，**识别时不需要启动 LM Studio**。
+**识别时不需要启动 LM Studio**，它只作为已有模型的来源。
 
 也可以点击语音 HUD 里的模型图标，打开 **语音输入设置**，手动选择模型所在目录。
 

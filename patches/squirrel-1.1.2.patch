@@ -1,40 +1,100 @@
 diff --git a/Squirrel.xcodeproj/project.pbxproj b/Squirrel.xcodeproj/project.pbxproj
-index becf3ce..36e9013 100644
+index becf3ce..aed51b1 100644
 --- a/Squirrel.xcodeproj/project.pbxproj
 +++ b/Squirrel.xcodeproj/project.pbxproj
-@@ -77,6 +77,8 @@
+@@ -20,6 +20,13 @@
+ 		441E637E22B7E96F006DCCDD /* stroke.schema.yaml in Copy Shared Support Files */ = {isa = PBXBuildFile; fileRef = 441E636B22B7E90D006DCCDD /* stroke.schema.yaml */; };
+ 		441E637F22B7E96F006DCCDD /* terra_pinyin.dict.yaml in Copy Shared Support Files */ = {isa = PBXBuildFile; fileRef = 441E636422B7E90C006DCCDD /* terra_pinyin.dict.yaml */; };
+ 		441E638022B7E96F006DCCDD /* terra_pinyin.schema.yaml in Copy Shared Support Files */ = {isa = PBXBuildFile; fileRef = 441E636522B7E90C006DCCDD /* terra_pinyin.schema.yaml */; };
++441E6310322B7E96F006DCCDD /* zh-hant-t-essay-bgw.gram in Copy Shared Support Files */ = {isa = PBXBuildFile; fileRef = 441E6310422B7E90C006DCCDD /* zh-hant-t-essay-bgw.gram */; };
++441E6310122B7E96F006DCCDD /* zh-hant-t-essay-bgc.gram in Copy Shared Support Files */ = {isa = PBXBuildFile; fileRef = 441E6310222B7E90C006DCCDD /* zh-hant-t-essay-bgc.gram */; };
++441E639922B7E96F006DCCDD /* grammar.yaml in Copy Shared Support Files */ = {isa = PBXBuildFile; fileRef = 441E6310022B7E90C006DCCDD /* grammar.yaml */; };
++441E639722B7E96F006DCCDD /* cangjie5_char.dict.yaml in Copy Shared Support Files */ = {isa = PBXBuildFile; fileRef = 441E639822B7E90C006DCCDD /* cangjie5_char.dict.yaml */; };
++441E639522B7E96F006DCCDD /* cangjie5.stem.dict.yaml in Copy Shared Support Files */ = {isa = PBXBuildFile; fileRef = 441E639622B7E90C006DCCDD /* cangjie5.stem.dict.yaml */; };
++441E639322B7E96F006DCCDD /* cangjie5.extended.dict.yaml in Copy Shared Support Files */ = {isa = PBXBuildFile; fileRef = 441E639422B7E90C006DCCDD /* cangjie5.extended.dict.yaml */; };
++441E639122B7E96F006DCCDD /* cangjie5.base.dict.yaml in Copy Shared Support Files */ = {isa = PBXBuildFile; fileRef = 441E639222B7E90C006DCCDD /* cangjie5.base.dict.yaml */; };
+ 		441E638122B7E96F006DCCDD /* detenele.schema.yaml in Copy Shared Support Files */ = {isa = PBXBuildFile; fileRef = 441E638222B7E90C006DCCDD /* detenele.schema.yaml */; };
+ 		441E638122B7E96F006DCCDD /* terra_pinyin_12345.schema.yaml in Copy Shared Support Files */ = {isa = PBXBuildFile; fileRef = 441E638222B7E90C006DCCDD /* terra_pinyin_12345.schema.yaml */; };
+ 		442B5B881570C37200370DEA /* squirrel.yaml in Copy Shared Support Files */ = {isa = PBXBuildFile; fileRef = 442B5B871570C37200370DEA /* squirrel.yaml */; };
+@@ -77,6 +84,9 @@
  		B35D2FE82BF00839009D156B /* BridgingFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B35D2FE72BF00839009D156B /* BridgingFunctions.swift */; };
  		B38E9B912BE9AE1E0036ABEF /* SquirrelApplicationDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B38E9B902BE9AE1E0036ABEF /* SquirrelApplicationDelegate.swift */; };
  		B38E9B952BEAFEFD0036ABEF /* SquirrelInputController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B38E9B942BEAFEFD0036ABEF /* SquirrelInputController.swift */; };
 +		A11CE0020000000000000001 /* SquirrelVoiceBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11CE0010000000000000001 /* SquirrelVoiceBridge.swift */; };
 +		A11CE0040000000000000001 /* SquirrelVoiceSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11CE0030000000000000001 /* SquirrelVoiceSettings.swift */; };
++		A11CE0060000000000000001 /* SquirrelVoiceModelDownload.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11CE0050000000000000001 /* SquirrelVoiceModelDownload.swift */; };
  		B39771232BECEA150093A49B /* MacOSKeyCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B39771222BECEA150093A49B /* MacOSKeyCodes.swift */; };
  		B39771252BED899F0093A49B /* SquirrelConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = B39771242BED899F0093A49B /* SquirrelConfig.swift */; };
  		B39771272BED9B250093A49B /* SquirrelTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B39771262BED9B250093A49B /* SquirrelTheme.swift */; };
-@@ -284,6 +286,8 @@
+@@ -162,6 +172,13 @@
+ 				441E637E22B7E96F006DCCDD /* stroke.schema.yaml in Copy Shared Support Files */,
+ 				441E637F22B7E96F006DCCDD /* terra_pinyin.dict.yaml in Copy Shared Support Files */,
+ 				441E638022B7E96F006DCCDD /* terra_pinyin.schema.yaml in Copy Shared Support Files */,
++441E6310322B7E96F006DCCDD /* zh-hant-t-essay-bgw.gram in Copy Shared Support Files */,
++441E6310122B7E96F006DCCDD /* zh-hant-t-essay-bgc.gram in Copy Shared Support Files */,
++441E639922B7E96F006DCCDD /* grammar.yaml in Copy Shared Support Files */,
++441E639722B7E96F006DCCDD /* cangjie5_char.dict.yaml in Copy Shared Support Files */,
++441E639522B7E96F006DCCDD /* cangjie5.stem.dict.yaml in Copy Shared Support Files */,
++441E639322B7E96F006DCCDD /* cangjie5.extended.dict.yaml in Copy Shared Support Files */,
++441E639122B7E96F006DCCDD /* cangjie5.base.dict.yaml in Copy Shared Support Files */,
+ 				441E638122B7E96F006DCCDD /* detenele.schema.yaml in Copy Shared Support Files */,
+ 				441E638122B7E96F006DCCDD /* terra_pinyin_12345.schema.yaml in Copy Shared Support Files */,
+ 				44AEBC7521F569FD00344375 /* key_bindings.yaml in Copy Shared Support Files */,
+@@ -216,6 +233,13 @@
+ 		441E636322B7E90C006DCCDD /* cangjie5.schema.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = cangjie5.schema.yaml; path = data/plum/cangjie5.schema.yaml; sourceTree = "<group>"; };
+ 		441E636422B7E90C006DCCDD /* terra_pinyin.dict.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = terra_pinyin.dict.yaml; path = data/plum/terra_pinyin.dict.yaml; sourceTree = "<group>"; };
+ 		441E636522B7E90C006DCCDD /* terra_pinyin.schema.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = terra_pinyin.schema.yaml; path = data/plum/terra_pinyin.schema.yaml; sourceTree = "<group>"; };
++441E6310422B7E90C006DCCDD /* zh-hant-t-essay-bgw.gram */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = zh-hant-t-essay-bgw.gram; path = data/plum/zh-hant-t-essay-bgw.gram; sourceTree = "<group>"; };
++441E6310222B7E90C006DCCDD /* zh-hant-t-essay-bgc.gram */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = zh-hant-t-essay-bgc.gram; path = data/plum/zh-hant-t-essay-bgc.gram; sourceTree = "<group>"; };
++441E6310022B7E90C006DCCDD /* grammar.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = grammar.yaml; path = data/plum/grammar.yaml; sourceTree = "<group>"; };
++441E639822B7E90C006DCCDD /* cangjie5_char.dict.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = cangjie5_char.dict.yaml; path = data/plum/cangjie5_char.dict.yaml; sourceTree = "<group>"; };
++441E639622B7E90C006DCCDD /* cangjie5.stem.dict.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = cangjie5.stem.dict.yaml; path = data/plum/cangjie5.stem.dict.yaml; sourceTree = "<group>"; };
++441E639422B7E90C006DCCDD /* cangjie5.extended.dict.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = cangjie5.extended.dict.yaml; path = data/plum/cangjie5.extended.dict.yaml; sourceTree = "<group>"; };
++441E639222B7E90C006DCCDD /* cangjie5.base.dict.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = cangjie5.base.dict.yaml; path = data/plum/cangjie5.base.dict.yaml; sourceTree = "<group>"; };
+ 		441E638222B7E90C006DCCDD /* detenele.schema.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = detenele.schema.yaml; path = data/plum/detenele.schema.yaml; sourceTree = "<group>"; };
+ 		441E638222B7E90C006DCCDD /* terra_pinyin_12345.schema.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = terra_pinyin_12345.schema.yaml; path = data/plum/terra_pinyin_12345.schema.yaml; sourceTree = "<group>"; };
+ 		441E636622B7E90C006DCCDD /* cangjie5_express.schema.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = cangjie5_express.schema.yaml; path = data/plum/cangjie5_express.schema.yaml; sourceTree = "<group>"; };
+@@ -284,6 +308,9 @@
  		B38E9B8F2BE9AE1E0036ABEF /* Squirrel-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Squirrel-Bridging-Header.h"; path = "sources/Squirrel-Bridging-Header.h"; sourceTree = "<group>"; };
  		B38E9B902BE9AE1E0036ABEF /* SquirrelApplicationDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SquirrelApplicationDelegate.swift; path = sources/SquirrelApplicationDelegate.swift; sourceTree = "<group>"; };
  		B38E9B942BEAFEFD0036ABEF /* SquirrelInputController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SquirrelInputController.swift; path = sources/SquirrelInputController.swift; sourceTree = "<group>"; };
 +		A11CE0010000000000000001 /* SquirrelVoiceBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SquirrelVoiceBridge.swift; path = sources/SquirrelVoiceBridge.swift; sourceTree = "<group>"; };
 +		A11CE0030000000000000001 /* SquirrelVoiceSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SquirrelVoiceSettings.swift; path = sources/SquirrelVoiceSettings.swift; sourceTree = "<group>"; };
++		A11CE0050000000000000001 /* SquirrelVoiceModelDownload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SquirrelVoiceModelDownload.swift; path = sources/SquirrelVoiceModelDownload.swift; sourceTree = "<group>"; };
  		B39771222BECEA150093A49B /* MacOSKeyCodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MacOSKeyCodes.swift; path = sources/MacOSKeyCodes.swift; sourceTree = "<group>"; };
  		B39771242BED899F0093A49B /* SquirrelConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SquirrelConfig.swift; path = sources/SquirrelConfig.swift; sourceTree = "<group>"; };
  		B39771262BED9B250093A49B /* SquirrelTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SquirrelTheme.swift; path = sources/SquirrelTheme.swift; sourceTree = "<group>"; };
-@@ -319,6 +323,8 @@
+@@ -319,6 +346,9 @@
  			children = (
  				B38E9B902BE9AE1E0036ABEF /* SquirrelApplicationDelegate.swift */,
  				B38E9B942BEAFEFD0036ABEF /* SquirrelInputController.swift */,
 +				A11CE0010000000000000001 /* SquirrelVoiceBridge.swift */,
 +				A11CE0030000000000000001 /* SquirrelVoiceSettings.swift */,
++				A11CE0050000000000000001 /* SquirrelVoiceModelDownload.swift */,
  				B39771222BECEA150093A49B /* MacOSKeyCodes.swift */,
  				B397712C2BEEB39D0093A49B /* InputSource.swift */,
  				B397712E2BEECBED0093A49B /* Main.swift */,
-@@ -582,6 +588,8 @@
+@@ -477,6 +507,13 @@
+ 				441E636B22B7E90D006DCCDD /* stroke.schema.yaml */,
+ 				441E636422B7E90C006DCCDD /* terra_pinyin.dict.yaml */,
+ 				441E636522B7E90C006DCCDD /* terra_pinyin.schema.yaml */,
++441E6310422B7E90C006DCCDD /* zh-hant-t-essay-bgw.gram */,
++441E6310222B7E90C006DCCDD /* zh-hant-t-essay-bgc.gram */,
++441E6310022B7E90C006DCCDD /* grammar.yaml */,
++441E639822B7E90C006DCCDD /* cangjie5_char.dict.yaml */,
++441E639622B7E90C006DCCDD /* cangjie5.stem.dict.yaml */,
++441E639422B7E90C006DCCDD /* cangjie5.extended.dict.yaml */,
++441E639222B7E90C006DCCDD /* cangjie5.base.dict.yaml */,
+ 				441E638222B7E90C006DCCDD /* detenele.schema.yaml */,
+ 				441E638222B7E90C006DCCDD /* terra_pinyin_12345.schema.yaml */,
+ 				7B5488211D2DAAD10056A1BE /* default.yaml */,
+@@ -582,6 +619,9 @@
  				B39771232BECEA150093A49B /* MacOSKeyCodes.swift in Sources */,
  				B39771292BEDAF4A0093A49B /* SquirrelView.swift in Sources */,
  				B38E9B952BEAFEFD0036ABEF /* SquirrelInputController.swift in Sources */,
 +				A11CE0020000000000000001 /* SquirrelVoiceBridge.swift in Sources */,
 +				A11CE0040000000000000001 /* SquirrelVoiceSettings.swift in Sources */,
++				A11CE0060000000000000001 /* SquirrelVoiceModelDownload.swift in Sources */,
  				B39771252BED899F0093A49B /* SquirrelConfig.swift in Sources */,
  				B397712F2BEECBED0093A49B /* Main.swift in Sources */,
  				B397712D2BEEB39D0093A49B /* InputSource.swift in Sources */,

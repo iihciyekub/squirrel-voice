@@ -225,9 +225,16 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
   private let tableView = NSTableView()
   private let useButton = NSButton(title: "", target: nil, action: nil)
   private let revealButton = NSButton(title: "", target: nil, action: nil)
+  private let downloadManager = SquirrelVoiceModelDownloadManager.shared
+  private let downloadButton = NSButton(title: "", target: nil, action: nil)
+  private let downloadCancelButton = NSButton(title: "", target: nil, action: nil)
+  private let downloadProgress = NSProgressIndicator()
+  private let downloadStatus = NSTextField(labelWithString: "")
+  private var lastDownloadPhase: SquirrelVoiceModelDownloadManager.Phase?
 
   func show() {
     if window == nil { buildWindow() }
+    downloadManager.onUpdate = { [weak self] snapshot in self?.updateDownloadUI(snapshot) }
     updateCurrentCard()
     updateSourcePath()
     rescan()
@@ -238,7 +245,7 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
 
   private func buildWindow() {
     let w = NSWindow(
-      contentRect: NSRect(x: 0, y: 0, width: 560, height: 500),
+      contentRect: NSRect(x: 0, y: 0, width: 560, height: 585),
       styleMask: [.titled, .closable, .miniaturizable],
       backing: .buffered,
       defer: false
@@ -253,8 +260,8 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
     let title = NSTextField(labelWithString: localized("语音输入", "Voice Input"))
     title.font = .systemFont(ofSize: 20, weight: .semibold)
     let subtitle = NSTextField(labelWithString: localized(
-      "选择本地语音模型。LM Studio 只作为模型目录，不需要运行。",
-      "Choose a local speech model. LM Studio is only used as a model folder."
+      "推荐直接下载本地语音模型，也可以使用已有模型。",
+      "Download the recommended local speech model, or use an existing model."
     ))
     subtitle.font = .systemFont(ofSize: 12)
     subtitle.textColor = .secondaryLabelColor
@@ -276,7 +283,38 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
       currentBox.addSubview($0)
     }
 
-    let sourcesLabel = NSTextField(labelWithString: localized("模型来源", "Model Sources"))
+    let recommendedLabel = NSTextField(labelWithString: localized("推荐模型", "Recommended Model"))
+    recommendedLabel.font = .systemFont(ofSize: 13, weight: .semibold)
+    let recommendedName = NSTextField(labelWithString: "Confucius4-R2T2 · Q4_K_M")
+    recommendedName.font = .systemFont(ofSize: 12, weight: .medium)
+    let recommendedSize = NSTextField(labelWithString: localized("约 1.75 GB · 本地运行", "About 1.75 GB · Runs locally"))
+    recommendedSize.font = .systemFont(ofSize: 10.5)
+    recommendedSize.textColor = .secondaryLabelColor
+
+    downloadButton.title = localized("下载推荐模型", "Download Recommended Model")
+    downloadButton.target = self
+    downloadButton.action = #selector(downloadRecommendedModel)
+    downloadButton.setContentHuggingPriority(.required, for: .horizontal)
+    downloadButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+
+    downloadCancelButton.title = localized("取消", "Cancel")
+    downloadCancelButton.target = self
+    downloadCancelButton.action = #selector(cancelModelDownload)
+    downloadCancelButton.isHidden = true
+    downloadCancelButton.setContentHuggingPriority(.required, for: .horizontal)
+
+    downloadProgress.isIndeterminate = false
+    downloadProgress.minValue = 0
+    downloadProgress.maxValue = 1
+    downloadProgress.doubleValue = 0
+    downloadProgress.controlSize = .small
+    downloadProgress.isHidden = true
+
+    downloadStatus.font = .systemFont(ofSize: 10.5)
+    downloadStatus.textColor = .secondaryLabelColor
+    downloadStatus.lineBreakMode = .byTruncatingMiddle
+
+    let sourcesLabel = NSTextField(labelWithString: localized("其它来源", "Other Sources"))
     sourcesLabel.font = .systemFont(ofSize: 13, weight: .semibold)
     let lmPath = NSTextField(labelWithString: store.lmStudioRoot().path)
     lmPath.font = .monospacedSystemFont(ofSize: 10, weight: .regular)
@@ -344,10 +382,7 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
     statusLabel.lineBreakMode = .byWordWrapping
     statusLabel.maximumNumberOfLines = 2
 
-    let recommended = NSTextField(labelWithString: localized(
-      "默认推荐：NetEase Youdao · Confucius4-R2T2-GGUF",
-      "Recommended: NetEase Youdao · Confucius4-R2T2-GGUF"
-    ))
+    let recommended = NSTextField(labelWithString: "NetEase Youdao · Confucius4-R2T2-GGUF")
     recommended.font = .systemFont(ofSize: 11)
     recommended.textColor = .secondaryLabelColor
     let viewModelButton = NSButton(title: localized("查看模型页", "Model Page"), target: self, action: #selector(openRecommendedModel))
@@ -360,7 +395,10 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
     useButton.keyEquivalent = "\r"
 
     let views: [NSView] = [
-      title, subtitle, currentBox, sourcesLabel, lmRow, customRow,
+      title, subtitle, currentBox,
+      recommendedLabel, recommendedName, recommendedSize, downloadButton,
+      downloadProgress, downloadStatus, downloadCancelButton,
+      sourcesLabel, lmRow, customRow,
       availableLabel, scroll, statusLabel, recommended,
       viewModelButton, revealButton, useButton
     ]
@@ -388,8 +426,26 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
       currentDetail.topAnchor.constraint(equalTo: currentTitle.bottomAnchor, constant: 3),
       currentDetail.trailingAnchor.constraint(equalTo: currentBox.trailingAnchor, constant: -14),
 
+      recommendedLabel.leadingAnchor.constraint(equalTo: currentBox.leadingAnchor),
+      recommendedLabel.topAnchor.constraint(equalTo: currentBox.bottomAnchor, constant: 13),
+      recommendedName.leadingAnchor.constraint(equalTo: recommendedLabel.leadingAnchor),
+      recommendedName.topAnchor.constraint(equalTo: recommendedLabel.bottomAnchor, constant: 6),
+      recommendedSize.leadingAnchor.constraint(equalTo: recommendedName.leadingAnchor),
+      recommendedSize.topAnchor.constraint(equalTo: recommendedName.bottomAnchor, constant: 2),
+      downloadButton.trailingAnchor.constraint(equalTo: currentBox.trailingAnchor),
+      downloadButton.centerYAnchor.constraint(equalTo: recommendedName.centerYAnchor),
+
+      downloadProgress.leadingAnchor.constraint(equalTo: recommendedName.leadingAnchor),
+      downloadProgress.trailingAnchor.constraint(equalTo: currentBox.trailingAnchor, constant: -86),
+      downloadProgress.topAnchor.constraint(equalTo: recommendedSize.bottomAnchor, constant: 7),
+      downloadStatus.leadingAnchor.constraint(equalTo: downloadProgress.leadingAnchor),
+      downloadStatus.topAnchor.constraint(equalTo: downloadProgress.bottomAnchor, constant: 2),
+      downloadStatus.trailingAnchor.constraint(equalTo: downloadProgress.trailingAnchor),
+      downloadCancelButton.trailingAnchor.constraint(equalTo: currentBox.trailingAnchor),
+      downloadCancelButton.centerYAnchor.constraint(equalTo: downloadProgress.centerYAnchor),
+
       sourcesLabel.leadingAnchor.constraint(equalTo: currentBox.leadingAnchor),
-      sourcesLabel.topAnchor.constraint(equalTo: currentBox.bottomAnchor, constant: 13),
+      sourcesLabel.topAnchor.constraint(equalTo: downloadStatus.bottomAnchor, constant: 13),
       lmRow.leadingAnchor.constraint(equalTo: sourcesLabel.leadingAnchor),
       lmRow.trailingAnchor.constraint(equalTo: currentBox.trailingAnchor),
       lmRow.topAnchor.constraint(equalTo: sourcesLabel.bottomAnchor, constant: 6),
@@ -405,7 +461,7 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
       scroll.leadingAnchor.constraint(equalTo: currentBox.leadingAnchor),
       scroll.trailingAnchor.constraint(equalTo: currentBox.trailingAnchor),
       scroll.topAnchor.constraint(equalTo: availableLabel.bottomAnchor, constant: 6),
-      scroll.heightAnchor.constraint(equalToConstant: 150),
+      scroll.heightAnchor.constraint(equalToConstant: 138),
       statusLabel.leadingAnchor.constraint(equalTo: scroll.leadingAnchor),
       statusLabel.topAnchor.constraint(equalTo: scroll.bottomAnchor, constant: 5),
       statusLabel.trailingAnchor.constraint(equalTo: scroll.trailingAnchor),
@@ -437,8 +493,8 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
         self.tableView.reloadData()
         self.statusLabel.stringValue = found.isEmpty
           ? self.localized(
-              "未找到语音模型。请先用 LM Studio 下载 Confucius4-R2T2 Q4_K_M + mmproj，下载完成后点「扫描 LM Studio」；也可以选择其它目录。",
-              "No voice model found. Download Confucius4-R2T2 Q4_K_M + mmproj in LM Studio, then click Scan LM Studio, or choose another folder."
+              "未找到可用模型。可以直接点击上方「下载推荐模型」，也可以扫描 LM Studio 或选择其它目录。",
+              "No usable model found. Download the recommended model above, scan LM Studio, or choose another folder."
             )
           : self.localized("找到 \(found.count) 个可用模型。", "Found \(found.count) usable models.")
         if let active = self.store.activeModel(),
@@ -455,7 +511,7 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
   private func updateCurrentCard() {
     guard let model = store.activeModel() else {
       currentTitle.stringValue = localized("未选择语音模型", "No Voice Model Selected")
-      currentDetail.stringValue = localized("扫描 LM Studio 或选择其它模型目录", "Scan LM Studio or choose another model folder")
+      currentDetail.stringValue = localized("下载推荐模型，或使用已有模型", "Download the recommended model or use an existing model")
       return
     }
     currentTitle.stringValue = "\(model.displayName) · \(model.variant)"
@@ -507,6 +563,14 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
 
   @objc private func scanPressed() { rescan() }
 
+  @objc private func downloadRecommendedModel() {
+    downloadManager.startOrResume()
+  }
+
+  @objc private func cancelModelDownload() {
+    downloadManager.pause()
+  }
+
   @objc private func chooseFolder() {
     guard let window else { return }
     let panel = NSOpenPanel()
@@ -547,6 +611,95 @@ final class SquirrelVoiceSettingsController: NSObject, NSWindowDelegate, NSTable
   @objc private func openRecommendedModel() {
     if let url = URL(string: "https://huggingface.co/netease-youdao/Confucius4-R2T2-GGUF") {
       NSWorkspace.shared.open(url)
+    }
+  }
+
+  private func updateDownloadUI(_ snapshot: SquirrelVoiceModelDownloadManager.Snapshot) {
+    let formatter = ByteCountFormatter()
+    formatter.countStyle = .file
+    let downloaded = formatter.string(fromByteCount: snapshot.bytesDownloaded)
+    let total = formatter.string(fromByteCount: snapshot.totalBytes)
+    let speed = snapshot.bytesPerSecond > 0
+      ? " · \(formatter.string(fromByteCount: Int64(snapshot.bytesPerSecond)))/s"
+      : ""
+
+    downloadProgress.doubleValue = snapshot.progress
+    switch snapshot.phase {
+    case .idle:
+      downloadButton.title = localized("下载推荐模型", "Download Recommended Model")
+      downloadButton.isEnabled = true
+      downloadCancelButton.isHidden = true
+      downloadProgress.isHidden = true
+      downloadStatus.stringValue = localized("Q4_K_M + mmproj · 约 1.75 GB", "Q4_K_M + mmproj · about 1.75 GB")
+      downloadStatus.textColor = .secondaryLabelColor
+    case .downloading:
+      downloadButton.title = localized("正在下载…", "Downloading…")
+      downloadButton.isEnabled = false
+      downloadCancelButton.isHidden = false
+      downloadProgress.isHidden = false
+      downloadStatus.stringValue = localized(
+        "正在下载 \(downloaded) / \(total)\(speed)",
+        "Downloading \(downloaded) / \(total)\(speed)"
+      )
+      downloadStatus.textColor = .secondaryLabelColor
+    case .paused:
+      downloadButton.title = localized("继续下载", "Resume Download")
+      downloadButton.isEnabled = true
+      downloadCancelButton.isHidden = true
+      downloadProgress.isHidden = false
+      downloadStatus.stringValue = localized(
+        "已暂停 · \(downloaded) / \(total)",
+        "Paused · \(downloaded) / \(total)"
+      )
+      downloadStatus.textColor = .secondaryLabelColor
+    case .failed:
+      downloadButton.title = localized("重试", "Retry")
+      downloadButton.isEnabled = true
+      downloadCancelButton.isHidden = true
+      downloadProgress.isHidden = false
+      downloadStatus.stringValue = localized(
+        "下载失败：\(snapshot.errorMessage ?? "未知错误")",
+        "Download failed: \(snapshot.errorMessage ?? "Unknown error")"
+      )
+      downloadStatus.textColor = .systemRed
+    case .completed:
+      downloadButton.title = localized("已安装", "Installed")
+      downloadButton.isEnabled = false
+      downloadCancelButton.isHidden = true
+      downloadProgress.isHidden = true
+      downloadStatus.stringValue = localized("推荐模型已安装 ✓", "Recommended model installed ✓")
+      downloadStatus.textColor = .systemGreen
+      if lastDownloadPhase != nil && lastDownloadPhase != .completed {
+        rescanAndActivateDownloadedModel()
+      }
+    }
+    lastDownloadPhase = snapshot.phase
+  }
+
+  private func rescanAndActivateDownloadedModel() {
+    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+      guard let self else { return }
+      let found = self.store.scanModels()
+      DispatchQueue.main.async {
+        self.models = found
+        self.tableView.reloadData()
+        if let model = found.first(where: { $0.source == .squirrelVoice && $0.variant == "Q4_K_M" }) {
+          if self.store.activeModel()?.id != model.id {
+            self.store.select(model)
+            self.onModelChanged?()
+          }
+          if let row = found.firstIndex(where: { $0.id == model.id }) {
+            self.tableView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+            self.tableView.scrollRowToVisible(row)
+          }
+        }
+        self.statusLabel.stringValue = self.localized(
+          "模型下载完成，可以开始语音输入。",
+          "Model download complete. Voice input is ready."
+        )
+        self.updateButtons()
+        self.updateCurrentCard()
+      }
     }
   }
 
