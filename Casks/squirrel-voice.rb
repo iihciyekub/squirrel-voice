@@ -11,26 +11,10 @@ cask "squirrel-voice" do
 
   input_method "Squirrel Voice.app"
 
-  postflight_steps do
-    run "Squirrel Voice.app/Contents/MacOS/Squirrel Voice",
-        args: ["--install"],
-        base: :input_methoddir
-    run "/usr/bin/killall", args: ["TextInputMenuAgent"], must_succeed: false
-  end
-
-  uninstall_preflight_steps do
-    if_path_exists "Squirrel Voice.app/Contents/MacOS/Squirrel Voice", base: :input_methoddir do
-      run "Squirrel Voice.app/Contents/MacOS/Squirrel Voice",
-          args:         ["--disable-input-source"],
-          base:         :input_methoddir,
-          must_succeed: false
-    end
-    run "/usr/bin/killall", args: ["TextInputMenuAgent"], must_succeed: false
-  end
-
   caveats <<~EOS
     Squirrel Voice is installed for the current user in ~/Library/Input Methods.
-    It is registered and enabled automatically after installation.
+    After the first install, open Squirrel Voice once so macOS can register the input method:
+      open "$HOME/Library/Input Methods/Squirrel Voice.app"
     Speech models are stored separately and are not downloaded by Homebrew.
   EOS
 end
