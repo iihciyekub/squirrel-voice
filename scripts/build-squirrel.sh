@@ -153,4 +153,14 @@ fi
 
 codesign --verify --deep --strict --verbose=2 "$APP"
 
+# Keep local development builds out of LaunchServices. Input methods are
+# unusually sensitive to duplicate registrations with the same bundle ID;
+# only the copy under ~/Library/Input Methods should be registered on a
+# developer machine. This is harmless on CI where the path was never
+# registered in the first place.
+LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
+if [[ -x "$LSREGISTER" ]]; then
+  "$LSREGISTER" -u "$APP" >/dev/null 2>&1 || true
+fi
+
 echo "Built patched app: $APP"
