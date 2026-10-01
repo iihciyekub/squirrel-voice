@@ -143,15 +143,17 @@ chmod 755 "$HELPERS/squirrel-voice"
 # through SQUIRREL_VOICE_SIGN_IDENTITY and get Hardened Runtime + timestamp.
 IDENTITY="${SQUIRREL_VOICE_SIGN_IDENTITY:--}"
 if [[ "$IDENTITY" == "-" ]]; then
-  codesign --force --sign - "$HELPERS/squirrel-voice"
-  codesign --force --deep --sign - "$APP"
+  codesign --force --sign - --entitlements "$ROOT/integration/SquirrelVoiceHelper.entitlements" "$HELPERS/squirrel-voice"
+  codesign --force --deep --sign - --entitlements "$SRC/resources/Squirrel.entitlements" "$APP"
 else
-  codesign --force --sign "$IDENTITY" --options runtime --timestamp "$HELPERS/squirrel-voice"
+  codesign --force --sign "$IDENTITY" --options runtime --timestamp \
+    --entitlements "$ROOT/integration/SquirrelVoiceHelper.entitlements" "$HELPERS/squirrel-voice"
   codesign --force --deep --sign "$IDENTITY" --options runtime --timestamp \
     --entitlements "$SRC/resources/Squirrel.entitlements" "$APP"
 fi
 
 codesign --verify --deep --strict --verbose=2 "$APP"
+"$ROOT/scripts/verify-voice-signature.sh" "$APP"
 
 # Keep local development builds out of LaunchServices. Input methods are
 # unusually sensitive to duplicate registrations with the same bundle ID;

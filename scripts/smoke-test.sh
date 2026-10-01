@@ -34,6 +34,7 @@ if [[ -d "$APP" ]]; then
   [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")" == "$(tr -d '[:space:]' < "$ROOT/VERSION")" ]]
   ! /usr/libexec/PlistBuddy -c 'Print :SUFeedURL' "$APP/Contents/Info.plist" >/dev/null 2>&1
   codesign --verify --deep --strict "$APP"
+  "$ROOT/scripts/verify-voice-signature.sh" "$APP"
 else
   echo "[4/4] Squirrel Voice bundle (skipped: app not built yet)"
 fi

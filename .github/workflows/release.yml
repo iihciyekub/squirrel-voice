@@ -90,6 +90,9 @@ jobs:
           SQUIRREL_USE_UPSTREAM_PREBUILT: "1"
         run: ./scripts/build-squirrel.sh
 
+      - name: Verify atomic updates and rollback
+        run: ./scripts/test-atomic-install.sh
+
       - name: Notarize and staple app
         run: ./scripts/notarize-app.sh
 
@@ -118,6 +121,7 @@ jobs:
           APP="build/Squirrel-src/build/Build/Products/Release/Squirrel Voice.app"
           ZIP="dist/SquirrelVoice-$VERSION-arm64.zip"
           codesign --verify --deep --strict --verbose=2 "$APP"
+          ./scripts/verify-voice-signature.sh "$APP"
           xcrun stapler validate "$APP"
           spctl --assess --type execute --verbose=4 "$APP"
           test -f "$ZIP"
@@ -142,8 +146,9 @@ jobs:
           assets=("dist/SquirrelVoice-$VERSION-arm64.zip" "dist/SHA256SUMS.txt" "dist/squirrel-voice.rb")
           [[ -f "dist/SquirrelVoice-$VERSION-arm64.pkg" ]] && assets+=("dist/SquirrelVoice-$VERSION-arm64.pkg")
           gh release create "$TAG" "${assets[@]}" \
+            --latest \
             --title "Squirrel Voice $VERSION" \
-            --notes "Squirrel Voice $VERSION for Apple Silicon macOS. 已使用 Developer ID 签名并通过 Apple notarization。模型需单独下载。"
+            --notes "Squirrel Voice $VERSION for Apple Silicon macOS. 修复主程序与语音助手的麦克风签名权限，改进本地更新的原子替换、输入源状态保留和失败回滚。已使用 Developer ID 签名并通过 Apple notarization。模型需单独下载。"
 
       - name: Update Homebrew tap cask
         run: |
@@ -165,4 +170,3 @@ jobs:
             git commit -m "chore: update Homebrew cask to v$(tr -d '[:space:]' < VERSION)"
             git push origin HEAD:main
           fi
-

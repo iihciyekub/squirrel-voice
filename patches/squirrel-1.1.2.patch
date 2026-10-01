@@ -836,3 +836,11 @@ index bad53d9..88b77d0 100644
    func onChordTimer(_: Timer) {
      // chord release triggered by timer
      var processedKeys = false
+diff --git a/resources/Squirrel.entitlements b/resources/Squirrel.entitlements
+--- a/resources/Squirrel.entitlements
++++ b/resources/Squirrel.entitlements
+@@ -11,2 +11,4 @@
++	<key>com.apple.security.device.audio-input</key>
++	<true/>
+ </dict>
+ </plist>

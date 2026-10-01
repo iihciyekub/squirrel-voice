@@ -22,6 +22,12 @@ Squirrel Voice 是独立输入法，不要求系统预装官方 Squirrel。正�
 
 公开 Homebrew Cask 只负责把 `Squirrel Voice.app` 安装到 `~/Library/Input Methods`。用户在系统设置里添加一次输入法即可；安装和升级过程中不主动修改当前 macOS 输入源状态。
 
+本地更新先在输入法目录外准备并验证完整程序，再使用 `renamex_np(RENAME_SWAP)` 原子交换 `Contents`。安装路径及其 `Info.plist`、可执行文件始终存在；不能通过先删除 `Contents` 再复制来更新。更新前保存实际 TIS 启用模式与选择状态，更新后检查并恢复被系统丢失的状态，验证失败会交换回原程序。备份保存在 `~/Library/Application Support/Squirrel Voice/Legacy Backups`。
+
+输入源排障应同时检查 TIS 和持久化配置。macOS 27.2 实机上，第三方输入源保存于 `com.apple.inputsources` 的 `AppleEnabledThirdPartyInputSources`；仅检查 `com.apple.HIToolbox` 的 `AppleEnabledInputSources` 会误判。重加输入源可以通过系统设置完成，无需重置整个键盘配置。
+
+`SQUIRREL_VOICE_APP="/path/to/Squirrel Voice.app" ./scripts/install-local.sh` 可以安装指定的已签名程序。更新路径的原子性与回滚测试：`./scripts/test-atomic-install.sh`。
+
 ## 产品身份
 
 - App：`Squirrel Voice.app`
