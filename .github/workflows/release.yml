@@ -77,13 +77,9 @@ jobs:
             fi
           } >> "$GITHUB_ENV"
 
-      - name: Install native build dependency
-        run: brew install boost
-
       - name: Build Developer ID signed app
         env:
-          SQUIRREL_REBUILD_DEPS: "1"
-          BOOST_ROOT: /opt/homebrew/opt/boost
+          SQUIRREL_USE_UPSTREAM_PREBUILT: "1"
         run: ./scripts/build-squirrel.sh
 
       - name: Notarize and staple app

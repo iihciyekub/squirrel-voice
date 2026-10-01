@@ -24,16 +24,12 @@ jobs:
       - name: Check scripts
         run: zsh -n scripts/*.sh
 
-      - name: Install native build dependency
-        run: brew install boost
-
       - name: Build native voice helper
         run: ./build.sh
 
       - name: Build independent Squirrel Voice bundle
         env:
-          SQUIRREL_REBUILD_DEPS: "1"
-          BOOST_ROOT: /opt/homebrew/opt/boost
+          SQUIRREL_USE_UPSTREAM_PREBUILT: "1"
         run: ./scripts/build-squirrel.sh
 
       - name: Verify product identity

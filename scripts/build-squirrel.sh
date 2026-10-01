@@ -23,7 +23,14 @@ fi
 
 INSTALLED_APP="${SQUIRREL_INSTALLED_APP:-/Library/Input Methods/Squirrel.app}"
 INSTALLED_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$INSTALLED_APP/Contents/Info.plist" 2>/dev/null || true)"
-if [[ "${SQUIRREL_REBUILD_DEPS:-0}" != "1" && "$INSTALLED_VERSION" == "1.1.2" ]]; then
+if [[ "${SQUIRREL_USE_UPSTREAM_PREBUILT:-0}" == "1" ]]; then
+  echo "Using upstream Squirrel 1.1.2 CI dependency artifacts..."
+  (
+    cd "$SRC"
+    export SQUIRREL_BUNDLED_RECIPES="${SQUIRREL_BUNDLED_RECIPES:-lotem/rime-octagram-data lotem/rime-octagram-data@hant}"
+    ./action-install.sh
+  )
+elif [[ "${SQUIRREL_REBUILD_DEPS:-0}" != "1" && "$INSTALLED_VERSION" == "1.1.2" ]]; then
   echo "Reusing native dependencies from installed Squirrel 1.1.2..."
   "$ROOT/scripts/seed-installed-squirrel-deps.sh"
 
