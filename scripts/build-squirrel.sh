@@ -25,8 +25,17 @@ INSTALLED_APP="${SQUIRREL_INSTALLED_APP:-/Library/Input Methods/Squirrel.app}"
 INSTALLED_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$INSTALLED_APP/Contents/Info.plist" 2>/dev/null || true)"
 if [[ "${SQUIRREL_USE_UPSTREAM_PREBUILT:-0}" == "1" ]]; then
   echo "Using upstream Squirrel 1.1.2 CI dependency artifacts..."
+  # Upstream Actions checks Squirrel out with submodules enabled. The binary
+  # dependency archive supplies librime itself, but Xcode still consumes public
+  # headers from librime/src through the bridging header, so keep the pinned
+  # librime source submodule available without rebuilding it.
+  git -C "$SRC" submodule update --init --depth 1 librime
   (
     cd "$SRC"
+    # action-install.sh copies a versioned Sparkle framework with symlinks.
+    # Remove any previous extracted/copied runtime first so repeated local/CI
+    # builds cannot merge two framework layouts and corrupt those symlinks.
+    rm -rf download Frameworks/Sparkle.framework librime/dist
     export SQUIRREL_BUNDLED_RECIPES="${SQUIRREL_BUNDLED_RECIPES:-lotem/rime-octagram-data lotem/rime-octagram-data@hant}"
     ./action-install.sh
   )
