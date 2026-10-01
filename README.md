@@ -3,6 +3,12 @@
 Lightweight native macOS speech-to-text runtime for Squirrel/Rime, using
 NetEase Youdao **Confucius4-R2T2** GGUF weights and `llama.cpp`/Metal.
 
+The distributable input method is an independent product named **Squirrel Voice**
+with bundle/input-source ID `im.rime.inputmethod.SquirrelVoice`. It installs at
+`/Library/Input Methods/Squirrel Voice.app` and does not replace the official
+`Squirrel.app`. It deliberately keeps using `~/Library/Rime` so existing Rime
+schemas and user configuration can be reused.
+
 The design intentionally has no Python, Ollama, LM Studio service, browser,
 HTTP server, or cloud dependency. LM Studio is only one optional place where
 the GGUF files may already exist.
@@ -163,6 +169,40 @@ administrator-authentication dialog to replace `/Library/Input Methods/Squirrel.
 with `ditto`. It backs up the previous app, verifies the installed signature and
 helper, registers the bundle with LaunchServices, and restarts Squirrel. The
 installer never reads or handles the administrator password itself.
+
+## Release and Homebrew
+
+The release version is stored in `VERSION`. A production release uses the
+available Developer ID Application/Installer certificates and Apple
+notarization credentials:
+
+```bash
+./scripts/release-local.sh
+```
+
+This builds and Developer-ID-signs `Squirrel Voice.app`, notarizes and staples
+the app, creates a stapled ZIP, and then attempts to build a signed installer
+package. Model weights are not included in any release artifact.
+
+The Developer ID Application identity and Apple notarization profile are enough
+to produce a distributable, Gatekeeper-accepted ZIP. A publishable PKG also
+requires a **Developer ID Installer** identity with its private key available in
+the current keychain. If that installer identity is unavailable,
+`release-local.sh` creates an **unsigned PKG for local testing only** and skips
+PKG notarization. Do not publish that unsigned package.
+
+Once the Developer ID Installer identity is available, the signed + notarized
+PKG is the canonical distribution artifact. Homebrew should install the same
+PKG rather than moving the input-method bundle itself. After a PKG release is
+published, generate a cask from `homebrew/Casks/squirrel-voice.rb.in` with:
+
+```bash
+SQUIRREL_VOICE_RELEASE_BASE_URL=https://github.com/OWNER/REPO/releases/download \
+SQUIRREL_VOICE_HOMEPAGE=https://github.com/OWNER/REPO \
+./scripts/render-cask.sh
+```
+
+Users can then install from a tap with `brew install --cask squirrel-voice`.
 
 Only newly stable text is printed to stdout. Diagnostics go to stderr, which
 keeps stdout suitable for the upcoming Squirrel IPC bridge.

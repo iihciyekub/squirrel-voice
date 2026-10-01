@@ -3,8 +3,8 @@ set -euo pipefail
 
 ROOT="${0:A:h:h}"
 SRC="${SQUIRREL_SOURCE_DIR:-$ROOT/build/Squirrel-src}"
-APP="$SRC/build/Build/Products/Release/Squirrel.app"
-DST="/Library/Input Methods/Squirrel.app"
+APP="$SRC/build/Build/Products/Release/Squirrel Voice.app"
+DST="/Library/Input Methods/Squirrel Voice.app"
 
 if [[ ! -d "$APP" ]]; then
   "$ROOT/scripts/build-squirrel.sh"
@@ -34,7 +34,7 @@ set -eu
 SRC='$APP'
 DST='$DST'
 STAMP=\$(date +%Y%m%d-%H%M%S)
-BACKUP="/Library/Input Methods/Squirrel.app.squirrel-voice-backup-\$STAMP"
+BACKUP="/Library/Input Methods/Squirrel Voice.app.backup-\$STAMP"
 if [ -d "\$DST" ]; then
   /bin/mv "\$DST" "\$BACKUP"
 fi
@@ -60,12 +60,13 @@ fi
 
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
   -f -R -trusted "$DST"
-killall Squirrel 2>/dev/null || true
+pkill -f '/Library/Input Methods/Squirrel Voice.app/Contents/MacOS/' 2>/dev/null || true
 sleep 1
-open -a "$DST"
+"$DST/Contents/MacOS/Squirrel Voice" --register-input-source || true
+open "$DST"
 
 echo "Installed: $DST"
 if [[ -f /tmp/squirrel-voice-last-backup.txt ]]; then
   echo "Backup: $(cat /tmp/squirrel-voice-last-backup.txt)"
 fi
-echo "Use Command+Shift+Space while Squirrel is the active input source to toggle speech input."
+echo "Use Command+Shift+Space while Squirrel Voice is the active input source to toggle speech input."

@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="${0:A:h:h}"
 HELPER="$ROOT/build/squirrel-voice"
-APP="$ROOT/build/Squirrel-src/build/Build/Products/Release/Squirrel.app"
+APP="$ROOT/build/Squirrel-src/build/Build/Products/Release/Squirrel Voice.app"
 
 "$ROOT/build.sh" >/dev/null
 
@@ -26,12 +26,16 @@ else
 fi
 
 if [[ -d "$APP" ]]; then
-  echo "[4/4] patched Squirrel bundle"
+  echo "[4/4] Squirrel Voice bundle"
   test -x "$APP/Contents/Helpers/squirrel-voice"
   /usr/libexec/PlistBuddy -c 'Print :NSMicrophoneUsageDescription' "$APP/Contents/Info.plist" >/dev/null
+  [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Contents/Info.plist")" == "im.rime.inputmethod.SquirrelVoice" ]]
+  [[ "$(/usr/libexec/PlistBuddy -c 'Print :TISInputSourceID' "$APP/Contents/Info.plist")" == "im.rime.inputmethod.SquirrelVoice" ]]
+  [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")" == "$(tr -d '[:space:]' < "$ROOT/VERSION")" ]]
+  ! /usr/libexec/PlistBuddy -c 'Print :SUFeedURL' "$APP/Contents/Info.plist" >/dev/null 2>&1
   codesign --verify --deep --strict "$APP"
 else
-  echo "[4/4] patched Squirrel bundle (skipped: app not built yet)"
+  echo "[4/4] Squirrel Voice bundle (skipped: app not built yet)"
 fi
 
 echo "Squirrel Voice smoke test: PASS"

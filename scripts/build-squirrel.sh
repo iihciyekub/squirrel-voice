@@ -3,6 +3,10 @@ set -euo pipefail
 
 ROOT="${0:A:h:h}"
 SRC="${SQUIRREL_SOURCE_DIR:-$ROOT/build/Squirrel-src}"
+VERSION="$(tr -d '[:space:]' < "$ROOT/VERSION")"
+BUILD_NUMBER="${SQUIRREL_VOICE_BUILD_NUMBER:-1}"
+PRODUCT_NAME="Squirrel Voice"
+BUNDLE_ID="im.rime.inputmethod.SquirrelVoice"
 
 "$ROOT/build.sh"
 "$ROOT/scripts/prepare-squirrel.sh"
@@ -37,26 +41,6 @@ if [[ "${SQUIRREL_REBUILD_DEPS:-0}" != "1" && "$INSTALLED_VERSION" == "1.1.2" ]]
   rm -rf "$SRC/Frameworks/Sparkle.framework"
   cp -R "$SRC/Sparkle/build/Release/Sparkle.framework" "$SRC/Frameworks/Sparkle.framework"
 
-  mkdir -p "$SRC/build"
-  (
-    cd "$SRC"
-    # Upstream's helper starts dynamic PBX IDs at 81/82, which are already
-    # occupied by detenele in the 1.1.2 project. Move this temporary build-time
-    # allocator forward so repeated local builds remain a valid Xcode project.
-    sed -i '' 's/^lastid=80$/lastid=90/' package/add_data_files
-    bash package/add_data_files
-    xcodebuild \
-      -project Squirrel.xcodeproj \
-      -configuration Release \
-      -scheme Squirrel \
-      -derivedDataPath build \
-      ARCHS=arm64 \
-      ONLY_ACTIVE_ARCH=NO \
-      MACOSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET" \
-      COMPILER_INDEX_STORE_ENABLE=NO \
-      CODE_SIGNING_ALLOWED=NO \
-      build
-  )
 else
   echo "Initializing and rebuilding Squirrel native dependencies..."
   git -C "$SRC" submodule update --init --recursive --depth 1
@@ -84,10 +68,37 @@ else
       -DCMAKE_OSX_DEPLOYMENT_TARGET:STRING="$MACOSX_DEPLOYMENT_TARGET" \
       -DPYTHON_EXECUTABLE:FILEPATH="$(xcrun -f python3)"
   fi
-  make -C "$SRC" release ARCHS=arm64 MACOSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET"
+  make -C "$SRC" deps ARCHS=arm64 MACOSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET"
 fi
 
-APP="$SRC/build/Build/Products/Release/Squirrel.app"
+mkdir -p "$SRC/build"
+(
+  cd "$SRC"
+  # Upstream's helper starts dynamic PBX IDs at 81/82, which are already
+  # occupied by detenele in the 1.1.2 project. Move this temporary build-time
+  # allocator forward so repeated local builds remain a valid Xcode project.
+  sed -i '' 's/^lastid=80$/lastid=90/' package/add_data_files
+  bash package/add_data_files
+  xcodebuild \
+    -project Squirrel.xcodeproj \
+    -configuration Release \
+    -scheme Squirrel \
+    -derivedDataPath build \
+    ARCHS=arm64 \
+    ONLY_ACTIVE_ARCH=NO \
+    MACOSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET" \
+    COMPILER_INDEX_STORE_ENABLE=NO \
+    CODE_SIGNING_ALLOWED=NO \
+    PRODUCT_NAME="$PRODUCT_NAME" \
+    PRODUCT_MODULE_NAME=Squirrel \
+    PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE_ID" \
+    INFOPLIST_KEY_CFBundleDisplayName="$PRODUCT_NAME" \
+    MARKETING_VERSION="$VERSION" \
+    CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+    build
+)
+
+APP="$SRC/build/Build/Products/Release/$PRODUCT_NAME.app"
 if [[ ! -d "$APP" ]]; then
   echo "Squirrel build did not produce: $APP" >&2
   exit 1
@@ -98,10 +109,18 @@ mkdir -p "$HELPERS"
 cp "$ROOT/build/squirrel-voice" "$HELPERS/squirrel-voice"
 chmod 755 "$HELPERS/squirrel-voice"
 
-# Local development signing. Release builds can provide a Developer ID through
-# SQUIRREL_VOICE_SIGN_IDENTITY and then run the normal Squirrel notarization path.
+# Local development signing by default. Release builds provide a Developer ID
+# through SQUIRREL_VOICE_SIGN_IDENTITY and get Hardened Runtime + timestamp.
 IDENTITY="${SQUIRREL_VOICE_SIGN_IDENTITY:--}"
-codesign --force --sign "$IDENTITY" "$HELPERS/squirrel-voice"
-codesign --force --deep --sign "$IDENTITY" "$APP"
+if [[ "$IDENTITY" == "-" ]]; then
+  codesign --force --sign - "$HELPERS/squirrel-voice"
+  codesign --force --deep --sign - "$APP"
+else
+  codesign --force --sign "$IDENTITY" --options runtime --timestamp "$HELPERS/squirrel-voice"
+  codesign --force --deep --sign "$IDENTITY" --options runtime --timestamp \
+    --entitlements "$SRC/resources/Squirrel.entitlements" "$APP"
+fi
+
+codesign --verify --deep --strict --verbose=2 "$APP"
 
 echo "Built patched app: $APP"
