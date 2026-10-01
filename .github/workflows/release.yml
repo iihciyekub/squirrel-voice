@@ -34,6 +34,8 @@ jobs:
         env:
           MAC_CSC_P12_BASE64: ${{ secrets.MAC_CSC_P12_BASE64 }}
           MAC_CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          MAC_INSTALLER_P12_BASE64: ${{ secrets.MAC_INSTALLER_P12_BASE64 }}
+          MAC_INSTALLER_P12_PASSWORD: ${{ secrets.MAC_INSTALLER_P12_PASSWORD }}
           APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
           APPLE_API_KEY_ID_SECRET: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER_SECRET: ${{ secrets.APPLE_API_ISSUER }}
@@ -44,6 +46,7 @@ jobs:
           done
 
           P12_PATH="$RUNNER_TEMP/squirrel-voice-developer-id.p12"
+          INSTALLER_P12_PATH="$RUNNER_TEMP/squirrel-voice-installer-id.p12"
           API_KEY_PATH="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY_ID_SECRET}.p8"
           KEYCHAIN_PATH="$RUNNER_TEMP/squirrel-voice-signing.keychain-db"
           KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
@@ -56,6 +59,11 @@ jobs:
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security import "$P12_PATH" -k "$KEYCHAIN_PATH" -P "$MAC_CSC_KEY_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security -T /usr/bin/productsign
+          if [[ -n "${MAC_INSTALLER_P12_BASE64:-}" && -n "${MAC_INSTALLER_P12_PASSWORD:-}" ]]; then
+            printf '%s' "$MAC_INSTALLER_P12_BASE64" | base64 --decode > "$INSTALLER_P12_PATH"
+            chmod 600 "$INSTALLER_P12_PATH"
+            security import "$INSTALLER_P12_PATH" -k "$KEYCHAIN_PATH" -P "$MAC_INSTALLER_P12_PASSWORD" -T /usr/bin/security -T /usr/bin/productsign
+          fi
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security list-keychains -d user -s "$KEYCHAIN_PATH"
 

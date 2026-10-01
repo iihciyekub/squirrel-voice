@@ -208,6 +208,29 @@ SQUIRREL_VOICE_HOMEPAGE=https://github.com/iihciyekub/squirrel-voice \
 
 Users can then install from a tap with `brew install --cask squirrel-voice`.
 
+### GitHub Actions release secrets
+
+The `Release` workflow uses the `production-release` Environment. A signed and
+notarized ZIP requires these Environment secrets:
+
+- `MAC_CSC_P12_BASE64`
+- `MAC_CSC_KEY_PASSWORD`
+- `APPLE_API_KEY_P8_BASE64`
+- `APPLE_API_KEY_ID`
+- `APPLE_API_ISSUER`
+
+and the Environment variable `MAC_CSC_NAME` (currently
+`Yongjian Li (2NLAH5MYH8)`).
+
+For a signed/notarized PKG and generated Homebrew Cask, add the optional
+installer identity separately:
+
+- `MAC_INSTALLER_P12_BASE64`
+- `MAC_INSTALLER_P12_PASSWORD`
+
+If the Installer identity is absent, the workflow still publishes the
+Developer-ID-signed and Apple-notarized ZIP and simply skips PKG/Cask output.
+
 Only newly stable text is printed to stdout. Diagnostics go to stderr, which
 keeps stdout suitable for the upcoming Squirrel IPC bridge.
 
