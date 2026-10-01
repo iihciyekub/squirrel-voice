@@ -145,6 +145,45 @@ void emit(const sv::StreamUpdate & u) {
     }
 }
 
+class LongDictationSegmentPolicy {
+public:
+    static constexpr std::size_t kSampleRate = 16000;
+    static constexpr std::size_t kNaturalCutSamples = 5 * kSampleRate;
+    static constexpr std::size_t kPreferredCutSamples = 8 * kSampleRate;
+    static constexpr std::size_t kHardCutSamples = 12 * kSampleRate;
+    static constexpr std::size_t kNaturalSilenceSamples = 300 * kSampleRate / 1000;
+    static constexpr std::size_t kShortSilenceSamples = 100 * kSampleRate / 1000;
+    static constexpr double kSilenceRms = 0.012;
+
+    void reset() {
+        segment_samples_ = 0;
+        silence_samples_ = 0;
+    }
+
+    bool observe(const float * samples, std::size_t count) {
+        if (!samples || count == 0) return false;
+        double energy = 0.0;
+        for (std::size_t i = 0; i < count; ++i) {
+            const double value = samples[i];
+            energy += value * value;
+        }
+        const double rms = std::sqrt(energy / static_cast<double>(count));
+        segment_samples_ += count;
+        if (rms < kSilenceRms) silence_samples_ += count;
+        else silence_samples_ = 0;
+
+        if (segment_samples_ >= kHardCutSamples) return true;
+        if (segment_samples_ >= kPreferredCutSamples && silence_samples_ >= kShortSilenceSamples) return true;
+        return segment_samples_ >= kNaturalCutSamples && silence_samples_ >= kNaturalSilenceSamples;
+    }
+
+    bool has_audio() const { return segment_samples_ != 0; }
+
+private:
+    std::size_t segment_samples_ = 0;
+    std::size_t silence_samples_ = 0;
+};
+
 std::string escape_field(const std::string & s) {
     std::string out;
     out.reserve(s.size());
@@ -175,6 +214,7 @@ public:
             stopping_ = false;
         }
         accepting_output_ = true;
+        segment_policy_.reset();
         running_ = true;
         worker_ = std::thread([this] { worker_loop(); });
         mic_.start([this](const float * samples, std::size_t count) {
@@ -228,6 +268,18 @@ private:
         std::cout << '\n' << std::flush;
     }
 
+    void roll_segment() {
+        // A segment rollover is not a user-visible stop. Finalize only the
+        // current bounded audio window, emit its not-yet-committed suffix, then
+        // reset the ASR state and immediately continue consuming microphone
+        // audio from the queue. This prevents audio/history from growing for
+        // the entire dictation session while keeping one continuous capture.
+        const auto final = runtime_.finish();
+        if (accepting_output_ && !final.delta.empty()) event("D", final.delta);
+        runtime_.reset();
+        segment_policy_.reset();
+    }
+
     void worker_loop() {
         try {
             for (;;) {
@@ -245,6 +297,7 @@ private:
                 if (!chunk.empty()) {
                     const auto update = runtime_.push(chunk);
                     if (accepting_output_ && !update.delta.empty()) event("D", update.delta);
+                    if (accepting_output_ && segment_policy_.observe(chunk.data(), chunk.size())) roll_segment();
                 }
             }
         } catch (const std::exception & e) {
@@ -262,6 +315,7 @@ private:
     std::condition_variable queue_cv_;
     std::queue<std::vector<float>> queue_;
     std::mutex output_mutex_;
+    LongDictationSegmentPolicy segment_policy_;
 };
 
 } // namespace
@@ -308,11 +362,17 @@ int main(int argc, char ** argv) {
         if (!args.wav.empty()) {
             const auto wav = sv::load_wav_16k_mono(args.wav);
             constexpr std::size_t feed = 1600; // 100 ms producer cadence; runtime re-chunks to --chunk-ms.
+            LongDictationSegmentPolicy segment_policy;
             for (std::size_t pos = 0; pos < wav.size(); pos += feed) {
                 const auto n = std::min(feed, wav.size() - pos);
                 emit(runtime.push(wav.data() + pos, n));
+                if (segment_policy.observe(wav.data() + pos, n)) {
+                    emit(runtime.finish());
+                    runtime.reset();
+                    segment_policy.reset();
+                }
             }
-            emit(runtime.finish());
+            if (segment_policy.has_audio()) emit(runtime.finish());
             std::cout << "\n";
             return 0;
         }
@@ -322,6 +382,7 @@ int main(int argc, char ** argv) {
         std::mutex mutex;
         std::condition_variable cv;
         std::queue<std::vector<float>> chunks;
+        LongDictationSegmentPolicy segment_policy;
         sv::Microphone mic;
         mic.start([&](const float * samples, std::size_t count) {
             {
@@ -339,10 +400,17 @@ int main(int argc, char ** argv) {
                 cv.wait_for(lock, std::chrono::milliseconds(100), [&] { return !chunks.empty() || g_stop.load(); });
                 if (!chunks.empty()) { chunk = std::move(chunks.front()); chunks.pop(); }
             }
-            if (!chunk.empty()) emit(runtime.push(chunk));
+            if (!chunk.empty()) {
+                emit(runtime.push(chunk));
+                if (segment_policy.observe(chunk.data(), chunk.size())) {
+                    emit(runtime.finish());
+                    runtime.reset();
+                    segment_policy.reset();
+                }
+            }
         }
         mic.stop();
-        emit(runtime.finish());
+        if (segment_policy.has_audio()) emit(runtime.finish());
         std::cout << "\n";
         return 0;
     } catch (const std::exception & e) {
