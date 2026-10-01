@@ -25,14 +25,11 @@ Squirrel Voice 基于 Rime Squirrel，并加入了完全在 Mac 本机运行的�
 brew tap iihciyekub/squirrel-voice https://github.com/iihciyekub/squirrel-voice.git
 brew trust iihciyekub/squirrel-voice
 brew install --cask squirrel-voice
-open "$HOME/Library/Input Methods/Squirrel Voice.app"
 ```
 
-最后一条 `open` 只需要在第一次安装后执行一次。Squirrel Voice 会在正常的 macOS 图形会话中自动注册并启用输入法。
+安装完成后，打开 **系统设置 → 键盘 → 文本输入 → 编辑**，添加一次 **Squirrel Voice**。之后正常使用和升级都不会反复修改系统输入源状态。
 
 然后从菜单栏输入法菜单切换到 **Squirrel Voice** 即可。
-
-如果菜单栏没有马上刷新，打开一次 **系统设置 → 键盘 → 文本输入**，或者重新登录 macOS 即可。
 
 以后升级：
 
@@ -46,9 +43,7 @@ brew upgrade --cask squirrel-voice
 1. 打开 [Releases](https://github.com/iihciyekub/squirrel-voice/releases)。
 2. 下载最新的 `SquirrelVoice-*-arm64.zip`。
 3. 解压后把 **Squirrel Voice.app** 放到 `~/Library/Input Methods/`。
-4. 打开一次 **Squirrel Voice.app**。它会自动注册并启用输入法。
-
-如果菜单栏没有马上出现，再打开一次 **系统设置 → 键盘 → 文本输入** 即可。
+4. 打开 **系统设置 → 键盘 → 文本输入 → 编辑**，添加 **Squirrel Voice**。
 
 ## 第一次使用：下载语音模型
 

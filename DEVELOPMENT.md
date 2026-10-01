@@ -18,9 +18,9 @@
 
 ## 安装初始化
 
-Squirrel Voice 是独立输入法，不要求系统预装官方 Squirrel。正常 GUI 启动和 `Squirrel Voice --install` 都会执行幂等的输入源初始化：首次运行会注册输入源、等待 TIS 刷新并启用默认模式，但不会强行切走用户当前正在使用的输入法；迁移或升级时如果 macOS 已恢复 Hans/Hant，则保留现有模式选择。
+Squirrel Voice 是独立输入法，不要求系统预装官方 Squirrel。正常输入法进程启动不会注册、启用、禁用或切换 TIS 输入源。`--install` / `--enable-input-source` / `--disable-input-source` / `--select-input-source` 仅保留给开发和诊断使用。
 
-Homebrew 7 的 structured install-step 运行在受限环境中，不能可靠访问当前 GUI 会话的 TIS / LaunchServices。因此 Cask 只负责安装 `Squirrel Voice.app`；首次 Homebrew 安装后由用户正常打开一次 App，让 App 自己完成注册。不要在 Homebrew `postflight_steps` 中直接调用 TIS 或 `/usr/bin/open`。
+公开 Homebrew Cask 只负责把 `Squirrel Voice.app` 安装到 `~/Library/Input Methods`。用户在系统设置里添加一次输入法即可；安装和升级过程中不主动修改当前 macOS 输入源状态。
 
 ## 产品身份
 

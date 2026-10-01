@@ -13,8 +13,7 @@ cask "squirrel-voice" do
 
   caveats <<~EOS
     Squirrel Voice is installed for the current user in ~/Library/Input Methods.
-    After the first install, open Squirrel Voice once so macOS can register the input method:
-      open "$HOME/Library/Input Methods/Squirrel Voice.app"
+    Add Squirrel Voice once in System Settings > Keyboard > Text Input > Edit.
     Speech models are stored separately and are not downloaded by Homebrew.
   EOS
 end
