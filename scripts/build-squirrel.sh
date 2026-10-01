@@ -16,6 +16,10 @@ echo "Building Squirrel 1.1.2 + Voice bridge..."
 # Xcode SDKs: several old librime dependencies otherwise configure themselves
 # for macOS 10.15 and libc++ turns the unsupported-target warning into -Werror.
 export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-13.0}"
+if [[ -z "${BOOST_ROOT:-}" ]] && command -v brew >/dev/null 2>&1; then
+  BOOST_ROOT="$(brew --prefix boost 2>/dev/null || true)"
+  [[ -n "$BOOST_ROOT" ]] && export BOOST_ROOT
+fi
 
 INSTALLED_APP="${SQUIRREL_INSTALLED_APP:-/Library/Input Methods/Squirrel.app}"
 INSTALLED_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$INSTALLED_APP/Contents/Info.plist" 2>/dev/null || true)"
